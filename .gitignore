@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.env
+venv/
+.env
+.env.*
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Node/React
+node_modules/
+build/
+dist/
+*.tsbuildinfo
+
+# Data
+/data/
+*.sqlite3
+*.db
+*.bak
+*.csv
+*.tsv
+*.parquet
+*.h5
+*.zip
+*.tar.gz
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+
+# Tests/coverage
+.coverage
+htmlcov/
+*.cover
+
+# Others
+*.swp
+*.swo
+
+# Ignore compiled files
+*.so
+*.dll
+*.exe
+
+# Ignore deployment configs
+*.pem
+*.key
+*.crt
+
+# Ignore secrets
+secrets.toml
+config/*.secret*
+
+# Ignore cache
+.cache/
+__pypackages__/
+
+# Ignore documentation builds
+/docs/_build/
