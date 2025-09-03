@@ -547,17 +547,4 @@ git reset --hard HEAD~1
 
 ---
 
-## 📞 Soporte y Contacto
-
-- **Project Lead**: Edison (para decisiones técnicas)
-- **GitHub Issues**: Para bugs y features
-- **Team Chat**: Para dudas rápidas
-- **Code Reviews**: Para feedback de código
-
----
-
-**¡Gracias por contribuir al Financial AI Chatbot! Tu trabajo ayuda a crear una herramienta valiosa para el análisis financiero.** 🚀
-
----
-
 *Última actualización: Septiembre 2025*
