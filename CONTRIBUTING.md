@@ -447,11 +447,7 @@ def calc_sim(q, d):  # calculate similarity
 git status  # Ver archivos en conflicto
 
 # Editar archivos manualmente, buscar:
-<<<<<<< HEAD
-código actual
-=======
-tu código
->>>>>>> feature/tu-branch
+
 
 # Después de resolver
 git add archivo_resuelto.py
@@ -546,5 +542,6 @@ git reset --hard HEAD~1
 ```
 
 ---
+
 
 *Última actualización: Septiembre 2025*
