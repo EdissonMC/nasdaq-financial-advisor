@@ -1,0 +1,31 @@
+# ===== CORE FRAMEWORK =====
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# ===== DATABASE =====
+sqlalchemy==2.0.23
+alembic==1.13.1
+psycopg2-binary==2.9.9
+
+# ===== REDIS =====
+# redis==5.0.1
+
+# ===== HTTP CLIENT =====
+# httpx==0.25.2
+# aiohttp==3.9.1
+
+# ===== UTILITIES =====
+python-dotenv==1.0.0
+python-multipart==0.0.6
+pyjwt==2.8.0
+
+# ===== TESTING =====
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# ===== DEVELOPMENT =====
+black==23.11.0
+flake8==6.1.0
+pre-commit==3.6.0
