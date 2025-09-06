@@ -1,11 +1,12 @@
 """
-Configuración básica para desarrollo inicial
+Basic configuration for initial development
 """
-from pydantic import BaseSettings
+from pydantic import ConfigDict
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Configuración de la aplicación"""
+    """Application configuration"""
     
     # API Configuration
     api_host: str = "0.0.0.0"
@@ -17,9 +18,8 @@ class Settings(BaseSettings):
     default_max_tokens: int = 1000
     default_temperature: float = 0.7
     
-    class Config:
-        env_file = ".env"
+    model_config = ConfigDict(env_file=".env")
 
 
-# Instancia global de configuración
+# Global configuration instance
 settings = Settings()

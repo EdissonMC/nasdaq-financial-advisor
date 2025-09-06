@@ -1,16 +1,16 @@
 """
-Tests básicos para la API
+Basic tests for the API
 """
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
+from src.main import app
 
 client = TestClient(app)
 
 
 def test_health_endpoint():
-    """Test del endpoint de health"""
+    """Test health endpoint"""
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     data = response.json()
@@ -19,9 +19,9 @@ def test_health_endpoint():
 
 
 def test_generate_endpoint():
-    """Test del endpoint de generación"""
+    """Test text generation endpoint"""
     payload = {
-        "prompt": "¿Cómo está el mercado NASDAQ hoy?",
+        "prompt": "How is the NASDAQ market today?",
         "max_tokens": 100,
         "temperature": 0.7
     }
@@ -33,10 +33,10 @@ def test_generate_endpoint():
 
 
 def test_chat_endpoint():
-    """Test del endpoint de chat"""
+    """Test chat endpoint"""
     payload = {
         "messages": [
-            {"role": "user", "content": "Hola, ¿puedes ayudarme con inversiones?"}
+            {"role": "user", "content": "Hello, can you help me with investments?"}
         ]
     }
     response = client.post("/api/v1/chat", json=payload)
