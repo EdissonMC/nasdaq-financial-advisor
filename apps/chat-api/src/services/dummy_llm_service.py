@@ -1,5 +1,5 @@
 """
-Servicio LLM con respuestas dummy para testing inicial
+Dummy LLM service for initial testing
 """
 import random
 import asyncio
@@ -10,26 +10,26 @@ from ..core.config import settings
 
 
 class DummyLLMService:
-    """Servicio LLM con respuestas simuladas"""
+    """LLM service with simulated responses"""
     
     def __init__(self):
-        """Inicializa el servicio dummy"""
+        """Initialize the dummy service"""
         self.financial_responses = [
-            "Como analista financiero AI, te puedo ayudar con análisis de mercado, valoración de activos y estrategias de inversión.",
-            "El mercado NASDAQ muestra tendencias interesantes. ¿Te interesa algún sector específico?",
-            "Para análisis fundamental, necesitaríamos revisar los estados financieros de la empresa.",
-            "Las métricas de riesgo son esenciales para una cartera balanceada. ¿Cuál es tu perfil de riesgo?",
-            "Los indicadores técnicos sugieren varios patrones. ¿Quieres que analicemos algún activo específico?"
+            "As a financial AI analyst, I can help you with market analysis, asset valuation and investment strategies.",
+            "The NASDAQ market shows interesting trends. Are you interested in any specific sector?",
+            "For fundamental analysis, we would need to review the company's financial statements.",
+            "Risk metrics are essential for a balanced portfolio. What's your risk profile?",
+            "Technical indicators suggest several patterns. Do you want to analyze any specific asset?"
         ]
     
     async def generate_text(self, request: LLMRequest) -> LLMResponse:
-        """Simula generación de texto"""
-        # Simular latencia de procesamiento
+        """Simulate text generation"""
+        # Simulate processing latency
         await asyncio.sleep(random.uniform(0.5, 2.0))
         
-        # Seleccionar respuesta
+        # Select response
         response_text = random.choice(self.financial_responses)
-        response_text += f"\n\n[Procesando prompt: '{request.prompt[:50]}...']"
+        response_text += f"\n\n[Processing prompt: '{request.prompt[:50]}...']"
         
         return LLMResponse(
             text=response_text,
@@ -42,21 +42,21 @@ class DummyLLMService:
         )
     
     async def chat(self, request: ChatRequest) -> ChatResponse:
-        """Simula conversación"""
+        """Simulate conversation"""
         await asyncio.sleep(random.uniform(0.5, 2.0))
         
-        # Obtener último mensaje del usuario
+        # Get last user message
         last_user_message = ""
         for message in reversed(request.messages):
             if message.role == "user":
                 last_user_message = message.content
                 break
         
-        # Generar respuesta contextual
-        if "hola" in last_user_message.lower():
-            response_text = "¡Hola! Soy tu asistente financiero AI. ¿En qué puedo ayudarte hoy?"
-        elif any(word in last_user_message.lower() for word in ['gracias', 'thank']):
-            response_text = "¡De nada! Estoy aquí para ayudarte con cualquier consulta financiera."
+        # Generate contextual response
+        if "hello" in last_user_message.lower():
+            response_text = "Hello! I'm your financial AI assistant. How can I help you today?"
+        elif any(word in last_user_message.lower() for word in ['thanks', 'thank you']):
+            response_text = "You're welcome! I'm here to help you with any financial queries."
         else:
             response_text = random.choice(self.financial_responses)
         
@@ -76,5 +76,5 @@ class DummyLLMService:
         )
 
 
-# Instancia global del servicio dummy
+# Global instance of the dummy service
 dummy_llm_service = DummyLLMService()

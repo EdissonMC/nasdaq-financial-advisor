@@ -1,5 +1,5 @@
 """
-Aplicación FastAPI principal
+Main FastAPI application
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,16 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router
 from .core.config import settings
 
-# Crear aplicación FastAPI
+# Create FastAPI application
 app = FastAPI(
     title="Financial AI Chatbot - LLM Service",
-    description="API para interactuar con LLMs para análisis financiero",
+    description="API to interact with LLMs for financial analysis",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# Configurar CORS
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Incluir rutas
+# Include routes
 app.include_router(router, prefix="/api/v1")
 
 

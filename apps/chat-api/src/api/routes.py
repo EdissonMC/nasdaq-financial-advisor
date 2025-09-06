@@ -1,5 +1,5 @@
 """
-Rutas de la API con servicio dummy
+API routes with dummy service
 """
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
@@ -22,7 +22,7 @@ async def health_check() -> Dict[str, str]:
 
 @router.post("/generate", response_model=LLMResponse)
 async def generate_text(request: LLMRequest) -> LLMResponse:
-    """Generar texto usando LLM"""
+    """Generate text using LLM"""
     try:
         response = await dummy_llm_service.generate_text(request)
         return response
@@ -32,7 +32,7 @@ async def generate_text(request: LLMRequest) -> LLMResponse:
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_conversation(request: ChatRequest) -> ChatResponse:
-    """Mantener conversación con LLM"""
+    """Maintain conversation with LLM"""
     try:
         response = await dummy_llm_service.chat(request)
         return response
@@ -42,7 +42,7 @@ async def chat_conversation(request: ChatRequest) -> ChatResponse:
 
 @router.get("/models")
 async def list_models() -> Dict[str, Any]:
-    """Lista modelos disponibles (dummy)"""
+    """List available models (dummy)"""
     return {
         "models": [
             {
