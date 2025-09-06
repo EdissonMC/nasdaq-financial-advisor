@@ -59,7 +59,10 @@ class BedrockService:
             )
             
             # Procesar respuesta
-            response_body = json.loads(response['body'].read())
+            response_data = response['body'].read()
+            if isinstance(response_data, bytes):
+                response_data = response_data.decode('utf-8')
+            response_body = json.loads(response_data)
             
             return LLMResponse(
                 text=response_body['content'][0]['text'],
@@ -103,7 +106,10 @@ class BedrockService:
                 body=json.dumps(body)
             )
             
-            response_body = json.loads(response['body'].read())
+            response_data = response['body'].read()
+            if isinstance(response_data, bytes):
+                response_data = response_data.decode('utf-8')
+            response_body = json.loads(response_data)
             
             assistant_message = ChatMessage(
                 role="assistant",
