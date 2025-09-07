@@ -46,7 +46,7 @@ async def test_bedrock_malformed_response(mock_bedrock_client):
         service = BedrockService()
         request = LLMRequest(prompt="Test")
         
-        with pytest.raises(Exception, match="Error calling Bedrock"):
+        with pytest.raises(Exception, match="Invalid JSON response from Bedrock"):
             await service.generate_text(request)
 
 

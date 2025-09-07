@@ -2,6 +2,7 @@
 Servicio AWS Bedrock para LLMs reales
 """
 import json
+import logging
 import boto3
 import asyncio
 from typing import Dict, Any
@@ -9,6 +10,8 @@ from botocore.exceptions import ClientError
 
 from ..models.llm import LLMRequest, LLMResponse, ChatRequest, ChatResponse, ChatMessage
 from ..core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class BedrockService:
@@ -28,9 +31,25 @@ class BedrockService:
                 aws_access_key_id=settings.aws_access_key_id,
                 aws_secret_access_key=settings.aws_secret_access_key
             )
+            logger.info("Bedrock client initialized successfully")
         except Exception as e:
-            print(f"Error initializing Bedrock client: {e}")
+            logger.error(f"Error initializing Bedrock client: {e}")
             self.client = None
+    
+    def _process_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
+        """Process Bedrock response to extract JSON data"""
+        response_data = response['body'].read()
+        if isinstance(response_data, bytes):
+            response_data = response_data.decode('utf-8')
+        return json.loads(response_data)
+    
+    def _extract_text_safely(self, response_body: Dict[str, Any]) -> str:
+        """Extract text from response with error handling"""
+        try:
+            return response_body['content'][0]['text']
+        except (KeyError, IndexError, TypeError) as e:
+            logger.error(f"Invalid response format from Bedrock: {e}")
+            raise Exception(f"Invalid response format from Bedrock: {e}")
     
     async def generate_text(self, request: LLMRequest) -> LLMResponse:
         """Generar texto usando Bedrock"""
@@ -55,17 +74,17 @@ class BedrockService:
             response = await asyncio.to_thread(
                 self.client.invoke_model,
                 modelId=request.model_id or settings.bedrock_model_id,
+                contentType='application/json',
+                accept='application/json',
                 body=json.dumps(body)
             )
             
             # Procesar respuesta
-            response_data = response['body'].read()
-            if isinstance(response_data, bytes):
-                response_data = response_data.decode('utf-8')
-            response_body = json.loads(response_data)
+            response_body = self._process_response(response)
+            text = self._extract_text_safely(response_body)
             
             return LLMResponse(
-                text=response_body['content'][0]['text'],
+                text=text,
                 model_id=request.model_id or settings.bedrock_model_id,
                 usage={
                     "input_tokens": response_body['usage']['input_tokens'],
@@ -75,8 +94,15 @@ class BedrockService:
             )
             
         except ClientError as e:
-            raise Exception(f"Bedrock API error: {e}")
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            error_message = e.response.get('Error', {}).get('Message', str(e))
+            logger.error(f"Bedrock API error [{error_code}]: {error_message}")
+            raise Exception(f"Bedrock API error [{error_code}]: {error_message}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Bedrock response: {e}")
+            raise Exception(f"Invalid JSON response from Bedrock: {e}")
         except Exception as e:
+            logger.error(f"Unexpected error calling Bedrock: {e}")
             raise Exception(f"Error calling Bedrock: {e}")
     
     async def chat(self, request: ChatRequest) -> ChatResponse:
@@ -103,17 +129,17 @@ class BedrockService:
             response = await asyncio.to_thread(
                 self.client.invoke_model,
                 modelId=request.model_id or settings.bedrock_model_id,
+                contentType='application/json',
+                accept='application/json',
                 body=json.dumps(body)
             )
             
-            response_data = response['body'].read()
-            if isinstance(response_data, bytes):
-                response_data = response_data.decode('utf-8')
-            response_body = json.loads(response_data)
+            response_body = self._process_response(response)
+            text = self._extract_text_safely(response_body)
             
             assistant_message = ChatMessage(
                 role="assistant",
-                content=response_body['content'][0]['text']
+                content=text
             )
             
             return ChatResponse(
@@ -127,8 +153,15 @@ class BedrockService:
             )
             
         except ClientError as e:
-            raise Exception(f"Bedrock API error: {e}")
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            error_message = e.response.get('Error', {}).get('Message', str(e))
+            logger.error(f"Bedrock API error [{error_code}]: {error_message}")
+            raise Exception(f"Bedrock API error [{error_code}]: {error_message}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Bedrock response: {e}")
+            raise Exception(f"Invalid JSON response from Bedrock: {e}")
         except Exception as e:
+            logger.error(f"Unexpected error calling Bedrock: {e}")
             raise Exception(f"Error calling Bedrock: {e}")
 
 
