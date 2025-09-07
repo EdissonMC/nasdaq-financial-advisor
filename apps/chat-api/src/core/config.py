@@ -13,10 +13,22 @@ class Settings(BaseSettings):
     api_port: int = 8000
     debug: bool = True
     
-    # Dummy LLM Configuration
+    # AWS Configuration
+    aws_region: str = "us-east-1"
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    
+    # Bedrock Configuration
+    bedrock_model_id: str = "anthropic.claude-3-haiku-20240307-v1:0"
+    bedrock_max_tokens: int = 4096
+    bedrock_temperature: float = 0.7
+    
+    # Default model ID (for dummy service compatibility)
     default_model_id: str = "dummy-claude-3-haiku"
-    default_max_tokens: int = 1000
-    default_temperature: float = 0.7
+    
+    # Modo de operación (dummy o bedrock)
+    llm_mode: str = "dummy"  # dummy | bedrock
+    
     
     model_config = ConfigDict(env_file=".env")
 
