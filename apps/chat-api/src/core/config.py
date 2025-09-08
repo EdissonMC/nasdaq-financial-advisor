@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     default_model_id: str = "dummy-claude-3-haiku"
     
     # Modo de operación (dummy o bedrock)
-    llm_mode: str = "dummy"  # dummy | bedrock
+    llm_mode: str = "bedrock"  # dummy | bedrock
     
     
     model_config = ConfigDict(env_file=".env")
