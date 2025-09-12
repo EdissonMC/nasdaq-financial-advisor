@@ -1146,11 +1146,10 @@ Este proyecto está diseñado para ser **ambicioso pero alcanzable** en 5 semana
 4. **Testing continuo** - no dejar testing para el final
 5. **Documentación sobre la marcha** - documentar decisiones mientras las tomamos
 
-La arquitectura elegida balanceaexperiencia de aprendizaje con viabilidad técnica. Al final tendrán un sistema que no solo funciona, sino que demuestra comprensión profunda de:
+La arquitectura elegida balancea experiencia de aprendizaje con viabilidad técnica. Al final setendrán un sistema que no solo funciona, sino que demuestra comprensión profunda de:
 
 - Sistemas distribuidos modernos
 - RAG y arquitecturas de IA
 - DevOps y deployment en cloud
 - Trabajo en equipo en proyectos técnicos complejos
 
-**¡A construir algo increíble!**
