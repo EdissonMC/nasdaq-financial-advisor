@@ -42,7 +42,7 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "app.main:app",
+         "src.main:app",
         host=settings.api_host,
         port=settings.api_port,
         reload=settings.debug

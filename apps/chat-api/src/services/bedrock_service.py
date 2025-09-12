@@ -10,6 +10,8 @@ from botocore.exceptions import ClientError
 
 from ..models.llm import LLMRequest, LLMResponse, ChatRequest, ChatResponse, ChatMessage
 from ..core.config import settings
+from .prompt_template import get_financial_prompt
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +53,25 @@ class BedrockService:
             logger.error(f"Invalid response format from Bedrock: {e}")
             raise Exception(f"Invalid response format from Bedrock: {e}")
     
+    
+    
+    
+    
+    
     async def generate_text(self, request: LLMRequest) -> LLMResponse:
         """Generar texto usando Bedrock"""
         if not self.client:
             raise Exception("Bedrock client not initialized")
+             
         
+        
+        prompt = get_financial_prompt(
+            user_query=request.prompt,
+            context="Shares of apple are AAPL: $175, up 2% today, P/E ratio 25.4"
+        )
+        
+        
+                
         # Preparar payload para Claude
         body = {
             "anthropic_version": "bedrock-2023-05-31",
@@ -64,7 +80,7 @@ class BedrockService:
             "messages": [
                 {
                     "role": "user",
-                    "content": request.prompt
+                    "content":prompt
                 }
             ]
         }
@@ -78,6 +94,11 @@ class BedrockService:
                 accept='application/json',
                 body=json.dumps(body)
             )
+            
+            
+       
+             
+             
             
             # Procesar respuesta
             response_body = self._process_response(response)
@@ -93,6 +114,12 @@ class BedrockService:
                 }
             )
             
+            
+            
+            
+            
+            
+            
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             error_message = e.response.get('Error', {}).get('Message', str(e))
@@ -104,6 +131,14 @@ class BedrockService:
         except Exception as e:
             logger.error(f"Unexpected error calling Bedrock: {e}")
             raise Exception(f"Error calling Bedrock: {e}")
+    
+    
+    
+    
+    
+    
+    
+    
     
     async def chat(self, request: ChatRequest) -> ChatResponse:
         """Chat conversacional usando Bedrock"""
