@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  chat-api:
+    build: ./apps/chat-api
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      chat-api:
+        condition: service_healthy
+
