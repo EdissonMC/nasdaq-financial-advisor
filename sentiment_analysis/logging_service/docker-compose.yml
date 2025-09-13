@@ -1,10 +1,11 @@
-version: '3.8'
+version: "3.9"
 services:
-  logging:
+  logging_service:
     build: .
     container_name: logging_service
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/data
-    restart: unless-stopped
+      - ./data:/data   # persist SQLite DB
+    environment:
+      - LOGGING_DB_PATH=/data/interactions.db

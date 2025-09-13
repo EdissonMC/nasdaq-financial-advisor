@@ -1,10 +1,5 @@
-fastapi==0.95.2
-uvicorn[standard]==0.22.0
-SQLAlchemy==2.0.20
-alembic==1.11.1
-pydantic==1.10.11
-python-multipart==0.0.6
-nltk==3.9.1
-scikit-learn==1.2.2
-pandas==2.1.1
-typing_extensions==4.7.1
+fastapi
+uvicorn
+sqlalchemy
+nltk
+pydantic
