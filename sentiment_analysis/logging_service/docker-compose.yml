@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  logging:
+    build: .
+    container_name: logging_service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
