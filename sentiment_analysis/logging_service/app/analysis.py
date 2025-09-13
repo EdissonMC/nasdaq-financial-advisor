@@ -8,9 +8,16 @@ nltk.download("vader_lexicon")
 _sia = SentimentIntensityAnalyzer()
 
 # Initialize a vectorizer (for now, single-sentence analysis)
-_vectorizer = CountVectorizer()
+# _vectorizer = CountVectorizer()
+# Initialize CountVectorizer with English stop words
+_vectorizer = CountVectorizer(stop_words='english')
 
 def analyze_text(text: str):
+    """
+    Analyzes the input text for sentiment and Bag-of-Words features.
+    Returns a dictionary with sentiment scores and BoW vector.
+    """
+    
     # Sentiment
     sentiment = _sia.polarity_scores(text)
 
