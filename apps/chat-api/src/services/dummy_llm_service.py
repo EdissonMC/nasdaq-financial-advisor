@@ -40,6 +40,16 @@ class DummyLLMService:
                 "total_tokens": len(request.prompt.split()) + len(response_text.split())
             }
         )
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     
     async def chat(self, request: ChatRequest) -> ChatResponse:
         """Simulate conversation"""
