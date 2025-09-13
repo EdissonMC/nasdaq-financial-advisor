@@ -30,7 +30,7 @@ export function setApiConfig(config: ApiConfig) {
 export function getApiConfig(): ApiConfig {
   return (
     currentConfig || {
-      chatApiUrl: import.meta.env.VITE_CHAT_API_URL || 'http://localhost:8000',
+      chatApiUrl: import.meta.env.VITE_CHAT_API_URL || 'http://127.0.0.1:8000/api/v1/generate',
       timeout: 30000,
       topK: 8,
       simulateIfOffline: true
@@ -38,11 +38,25 @@ export function getApiConfig(): ApiConfig {
   )
 }
 
-export async function askQuestion(query: string, sessionId?: string): Promise<AskResponse> {
+export async function askQuestion(
+  prompt: string,
+  sessionId?: string,
+  model_id?: string,
+  max_tokens?: number,
+  temperature?: number
+): Promise<AskResponse> {
+
   const config = getApiConfig()
-  const payload: Record<string, unknown> = { query }
+  const payload: Record<string, unknown> = { prompt }
   if (sessionId) payload.session_id = sessionId
   if (config.topK) payload.top_k = config.topK
+  if (model_id) payload.model_id = model_id
+  if (max_tokens) payload.max_tokens = max_tokens
+  if (typeof temperature === 'number') payload.temperature = temperature
+
+  // LOG para depuración
+  console.log('[askQuestion] URL:', config.chatApiUrl)
+  console.log('[askQuestion] Payload:', payload)
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), config.timeout || 30000)
@@ -50,8 +64,8 @@ export async function askQuestion(query: string, sessionId?: string): Promise<As
   try {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (config.authToken) headers['Authorization'] = config.authToken
-
-    const res = await fetch(`${config.chatApiUrl}/chat`, {
+//  const res = await fetch(`${config.chatApiUrl}/chat`, {
+  const res = await fetch(`${config.chatApiUrl}`, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
@@ -64,7 +78,14 @@ export async function askQuestion(query: string, sessionId?: string): Promise<As
       const text = await res.text().catch(() => '')
       throw new Error(text || `Error ${res.status}: ${res.statusText}`)
     }
-    return res.json()
+    let responseJson = await res.json()
+    // LOG para depuración de la respuesta
+    console.log('[askQuestion] Respuesta del servidor:', responseJson)
+    // Adaptar para que siempre tenga 'answer'
+    if (!responseJson.answer && responseJson.text) {
+      responseJson = { ...responseJson, answer: responseJson.text }
+    }
+    return responseJson
   } catch (error) {
     clearTimeout(timeoutId)
     if (config.simulateIfOffline) {
