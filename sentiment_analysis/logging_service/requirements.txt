@@ -3,3 +3,6 @@ uvicorn
 sqlalchemy
 nltk
 pydantic
+scikit-learn
+numpy
+pandas
