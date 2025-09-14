@@ -36,7 +36,8 @@ dist/
 *.h5
 *.zip
 *.tar.gz
-
+nasdaq_annual_reports/
+archivodeprueba.py
 # OS/Editor
 .DS_Store
 Thumbs.db
@@ -70,3 +71,4 @@ __pypackages__/
 
 # Ignore documentation builds
 /docs/_build/
+
