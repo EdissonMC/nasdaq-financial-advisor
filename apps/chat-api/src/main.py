@@ -1,8 +1,12 @@
+"""
+Main FastAPI application
+"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Importar configuración
+from .api.routes import router
 from .core.config import settings
+from .api import auth
 
 # Importar routers
 try:
@@ -11,41 +15,35 @@ try:
 except ImportError:
     routes_available = False
 
-from .api import auth
-
+# Create FastAPI application
 app = FastAPI(
-    title=settings.app_name,
-    description="API del Financial AI Chatbot con autenticación",
-    version="1.0.0",
+    title="Financial AI Chatbot - LLM Service",
+    description="API to interact with LLMs for financial analysis",
+    version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# Configurar CORS
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Incluir routers
-if routes_available:
-    app.include_router(routes.router)
+# Include routes
+app.include_router(router, prefix="/api/v1")
 
-# Incluir el router de autenticación
-app.include_router(auth.router)
 
-# Root endpoint
 @app.get("/")
 async def root():
+    """Root endpoint"""
     return {
-        "message": "Financial AI Chatbot API",
-        "version": "1.0.0",
+        "message": "Financial AI Chatbot - LLM Service",
         "docs": "/docs",
-        "health": "/health",
-        "auth": "/auth"
+        "health": "/api/v1/health"
     }
 
 # Health check general
@@ -58,3 +56,12 @@ async def health_check():
         "database": "PostgreSQL",
         "authentication": "JWT"
     }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+         "src.main:app",
+        host=settings.api_host,
+        port=settings.api_port,
+        reload=settings.debug
+    )
