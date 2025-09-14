@@ -6,3 +6,4 @@ pydantic
 scikit-learn
 numpy
 pandas
+textblob
