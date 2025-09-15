@@ -3,13 +3,36 @@ Rutas actualizadas con factory service
 """
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from typing import Optional
 
 from ..models.llm import LLMRequest, LLMResponse, ChatRequest, ChatResponse
 from ..services.llm_service_factory import get_llm_service
 from ..core.config import settings
+from ..db.session import get_db
+from ..api.dependencies import get_optional_current_user
+from ..db import models
 
 router = APIRouter()
 
+@router.get("/")
+async def root():
+    """Endpoint raíz del API"""
+    return {
+        "message": "Financial AI Chatbot API",
+        "version": "1.0.0",
+        "status": "running"
+    }
+
+@router.get("/chat/health")
+async def chat_health():
+    """Health check del servicio de chat"""
+    return {
+        "status": "healthy",
+        "service": "chat",
+        "message": "Servicio de chat funcionando correctamente"
+    }
 
 @router.get("/health")
 async def health_check() -> Dict[str, str]:

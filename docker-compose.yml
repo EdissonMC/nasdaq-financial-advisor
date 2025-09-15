@@ -1,21 +1,68 @@
 version: '3.9'
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: chatapi-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chatapi_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatapi_password}
+      POSTGRES_DB: ${POSTGRES_DB:-chatapi_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chatapi_user} -d ${POSTGRES_DB:-chatapi_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chatapi-network
+
+  # Backend API
   chat-api:
     build: ./apps/chat-api
+    container_name: chatapi-backend
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-chatapi_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-chatapi_password}
+      - POSTGRES_DB=${POSTGRES_DB:-chatapi_db}
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - ENVIRONMENT=docker
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - chatapi-network
+    env_file:
+      - ./apps/chat-api/.env
 
+  # Frontend
   frontend:
     build: ./frontend
+    container_name: chatapi-frontend
     ports:
-      - "5173:80"
+      - "${FRONTEND_PORT:-5173}:80"
     depends_on:
       chat-api:
         condition: service_healthy
+    networks:
+      - chatapi-network
 
+volumes:
+  postgres_data:
+
+networks:
+  chatapi-network:
+    driver: bridge

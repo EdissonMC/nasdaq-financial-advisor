@@ -6,6 +6,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api.routes import router
 from .core.config import settings
+from .api import auth
+
+# Importar routers
+try:
+    from .api import routes
+    routes_available = True
+except ImportError:
+    routes_available = False
 
 # Create FastAPI application
 app = FastAPI(
@@ -38,6 +46,16 @@ async def root():
         "health": "/api/v1/health"
     }
 
+# Health check general
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": "Financial AI Chatbot API",
+        "version": "1.0.0",
+        "database": "PostgreSQL",
+        "authentication": "JWT"
+    }
 
 if __name__ == "__main__":
     import uvicorn
