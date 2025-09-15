@@ -40,4 +40,9 @@ def analyze_text(text: str):
     polarity = blob_sentiment.polarity
     subjectivity = blob_sentiment.subjectivity
 
-    return {"sentiment": sentiment, "bow": bow_dict, "blob_polarity": {"polarity": polarity, "subjectivity": subjectivity}}
+    return {
+        "text": text,
+        "sentiment": sentiment, 
+        "bow": bow_dict, 
+        "blob_polarity": {"polarity": polarity, "subjectivity": subjectivity}
+        }
