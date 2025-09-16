@@ -3,7 +3,7 @@ Dummy LLM service for initial testing
 """
 import random
 import asyncio
-from typing import List
+from typing import List, Dict
 
 from ..models.llm import LLMRequest, LLMResponse, ChatRequest, ChatResponse, ChatMessage
 from ..core.config import settings
@@ -21,14 +21,22 @@ class DummyLLMService:
             "Risk metrics are essential for a balanced portfolio. What's your risk profile?",
             "Technical indicators suggest several patterns. Do you want to analyze any specific asset?"
         ]
+        # Mantener un índice por sesión para alternar respuestas y evitar repetición
+        self._session_index: Dict[str, int] = {}
     
     async def generate_text(self, request: LLMRequest) -> LLMResponse:
         """Simulate text generation"""
         # Simulate processing latency
         await asyncio.sleep(random.uniform(0.5, 2.0))
         
-        # Select response
-        response_text = random.choice(self.financial_responses)
+        # Seleccionar respuesta variando por session_id si existe
+        if request.session_id:
+            idx = self._session_index.get(request.session_id, -1)
+            idx = (idx + 1) % len(self.financial_responses)
+            self._session_index[request.session_id] = idx
+            response_text = self.financial_responses[idx]
+        else:
+            response_text = random.choice(self.financial_responses)
         response_text += f"\n\n[Processing prompt: '{request.prompt[:50]}...']"
         
         return LLMResponse(

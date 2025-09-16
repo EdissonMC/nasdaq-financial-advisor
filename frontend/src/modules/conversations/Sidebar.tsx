@@ -121,7 +121,7 @@ export function Sidebar({ conversations, activeId, onSelect, onCreate, onRename,
           </div>
         ))}
       </div>
-      <div style={{ fontSize: 12, color: 'var(--muted)' }}>Guardado localmente</div>
+      <div style={{ fontSize: 12, color: 'var(--muted)' }}>Historial sincronizado</div>
     </aside>
   )
 }

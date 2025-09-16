@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, validator, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -32,8 +32,7 @@ class UserRead(BaseModel):
     is_active: bool = True
     created_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 # AJUSTADO: Login response - exactamente lo que espera el frontend
 class LoginResponse(BaseModel):

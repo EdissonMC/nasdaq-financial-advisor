@@ -15,7 +15,7 @@ type Props = {
 
 export function MessageBubble({ role, text, citations }: Props) {
   const isUser = role === 'user'
-  const html = !isUser ? DOMPurify.sanitize(marked.parse(text)) : undefined
+  const html = !isUser ? DOMPurify.sanitize(marked.parse(text, { async: false }) as string) : undefined
   const copy = async () => {
     try { await navigator.clipboard.writeText(text) } catch {}
   }

@@ -30,7 +30,7 @@ export function setApiConfig(config: ApiConfig) {
 export function getApiConfig(): ApiConfig {
   return (
     currentConfig || {
-      chatApiUrl: import.meta.env.VITE_CHAT_API_URL || 'http://127.0.0.1:8000/api/v1/generate',
+      chatApiUrl: import.meta.env.VITE_CHAT_API_URL || 'http://127.0.0.1:8000/api/v1',
       timeout: 30000,
       topK: 8,
       simulateIfOffline: true
@@ -65,7 +65,7 @@ export async function askQuestion(
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (config.authToken) headers['Authorization'] = config.authToken
 //  const res = await fetch(`${config.chatApiUrl}/chat`, {
-  const res = await fetch(`${config.chatApiUrl}`, {
+  const res = await fetch(`${config.chatApiUrl}/generate`, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
@@ -110,6 +110,49 @@ export async function getHistory(sessionId: string): Promise<{ messages: Array<{
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
   const res = await fetch(url.toString(), { headers })
   if (!res.ok) throw new Error('No se pudo obtener el historial')
+  return res.json()
+}
+
+export async function deleteHistory(sessionId: string): Promise<{ deleted: number }> {
+  const cfg = getApiConfig()
+  const url = new URL(`${cfg.chatApiUrl}/chat/history`)
+  url.searchParams.set('session_id', sessionId)
+  const headers: Record<string, string> = {}
+  if (cfg.authToken) headers['Authorization'] = cfg.authToken
+  const res = await fetch(url.toString(), { method: 'DELETE', headers })
+  if (!res.ok) throw new Error('No se pudo borrar el historial')
+  return res.json()
+}
+
+// ===== Conversaciones estilo ChatGPT =====
+export async function listConversations(): Promise<{ conversations: Array<{ session_id: string; title: string; updated_at?: string; created_at?: string }> }> {
+  const cfg = getApiConfig()
+  const headers: Record<string, string> = {}
+  if (cfg.authToken) headers['Authorization'] = cfg.authToken
+  const res = await fetch(`${cfg.chatApiUrl}/conversations`, { headers })
+  if (!res.ok) throw new Error('No se pudo listar conversaciones')
+  return res.json()
+}
+
+export async function createConversation(sessionId: string, title?: string): Promise<{ session_id: string; title: string }> {
+  const cfg = getApiConfig()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (cfg.authToken) headers['Authorization'] = cfg.authToken
+  const res = await fetch(`${cfg.chatApiUrl}/conversations`, {
+    method: 'POST', headers, body: JSON.stringify({ session_id: sessionId, title })
+  })
+  if (!res.ok) throw new Error('No se pudo crear la conversación')
+  return res.json()
+}
+
+export async function renameConversationApi(sessionId: string, title: string): Promise<{ session_id: string; title: string }> {
+  const cfg = getApiConfig()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (cfg.authToken) headers['Authorization'] = cfg.authToken
+  const res = await fetch(`${cfg.chatApiUrl}/conversations/${sessionId}`, {
+    method: 'PATCH', headers, body: JSON.stringify({ title })
+  })
+  if (!res.ok) throw new Error('No se pudo renombrar la conversación')
   return res.json()
 }
 

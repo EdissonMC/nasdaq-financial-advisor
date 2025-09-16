@@ -8,13 +8,13 @@ import type { Conversation } from '../conversations/types'
 import type { ApiConfig } from '../config/types'
 import { loadConversations, saveConversations } from '../conversations/storage'
 import { loadConfig, saveConfig } from '../config/storage'
-import { askQuestion, setApiConfig, getHistory } from '../../services/api'
+import { askQuestion, setApiConfig, getHistory, deleteHistory, listConversations, createConversation as createConversationApi, renameConversationApi } from '../../services/api'
 
 export function App() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeId, setActiveId] = useState<string>('')
   const [loading, setLoading] = useState(false)
-  const [apiConfig, setApiConfigState] = useState<ApiConfig>({ chatApiUrl: 'http://localhost:8000' })
+  const [apiConfig, setApiConfigState] = useState<ApiConfig>({ chatApiUrl: 'http://localhost:8000/api/v1' })
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isRegisterOpen, setIsRegisterOpen] = useState(false)
@@ -25,22 +25,43 @@ export function App() {
     setApiConfigState(config)
     setApiConfig(config)
 
-    // Cargar conversaciones
-    const stored = loadConversations()
-    if (stored.length > 0) {
-      setConversations(stored)
-      setActiveId(stored[0].id)
-    } else {
-      const first: Conversation = {
-        id: crypto.randomUUID(),
-        title: 'Nueva conversación',
-        messages: [{ id: 'welcome', role: 'assistant', content: 'Hola, ¿en qué empresa NASDAQ te gustaría enfocarte?' }],
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+    // Intentar cargar lista desde backend si hay token
+    const boot = async () => {
+      try {
+        if (config.authToken) {
+          const res = await listConversations()
+          if (res.conversations.length) {
+            const mapped: Conversation[] = res.conversations.map(c => ({
+              id: c.session_id,
+              title: c.title,
+              messages: [],
+              createdAt: c.created_at ? Date.parse(c.created_at) : Date.now(),
+              updatedAt: c.updated_at ? Date.parse(c.updated_at) : Date.now()
+            }))
+            setConversations(mapped)
+            setActiveId(mapped[0].id)
+            return
+          }
+        }
+      } catch {}
+      // Fallback local
+      const stored = loadConversations()
+      if (stored.length > 0) {
+        setConversations(stored)
+        setActiveId(stored[0].id)
+      } else {
+        const first: Conversation = {
+          id: crypto.randomUUID(),
+          title: 'Nueva conversación',
+          messages: [{ id: 'welcome', role: 'assistant', content: 'Hola, ¿en qué empresa NASDAQ te gustaría enfocarte?' }],
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        }
+        setConversations([first])
+        setActiveId(first.id)
       }
-      setConversations([first])
-      setActiveId(first.id)
     }
+    void boot()
   }, [])
 
   useEffect(() => {
@@ -48,6 +69,12 @@ export function App() {
   }, [conversations])
 
   const activeConv = useMemo(() => conversations.find(c => c.id === activeId), [conversations, activeId])
+
+  // Cargar historial del backend al cambiar de conversación
+  useEffect(() => {
+    if (!activeId) return
+    loadHistoryFromApi(activeId)
+  }, [activeId])
 
   const createConversation = () => {
     const conv: Conversation = {
@@ -59,13 +86,18 @@ export function App() {
     }
     setConversations(prev => [conv, ...prev])
     setActiveId(conv.id)
+    // Crear también en backend
+    if (apiConfig.authToken) createConversationApi(conv.id, conv.title).catch(() => {})
   }
 
   const renameConversation = (id: string, title: string) => {
     setConversations(prev => prev.map(c => c.id === id ? { ...c, title, updatedAt: Date.now() } : c))
+    if (apiConfig.authToken) renameConversationApi(id, title).catch(() => {})
   }
 
   const deleteConversation = (id: string) => {
+    // Borrar en backend si existe
+    deleteHistory(id).catch(() => {})
     setConversations(prev => prev.filter(c => c.id !== id))
     if (activeId === id) {
       const next = conversations.find(c => c.id !== id)
