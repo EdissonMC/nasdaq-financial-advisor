@@ -1,24 +1,18 @@
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from typing import Dict
+from datetime import datetime
 
-class InteractionCreate(BaseModel):
-    user_id: Optional[str]
-    question: str
-    retrieved_chunks: Optional[List[Any]] = None
-    final_answer: Optional[str] = None
-    latency_ms: Optional[int] = None
-    token_usage: Optional[int] = None
-    rating: Optional[int] = None
 
-class InteractionOut(BaseModel):
+class AnalysisOut(BaseModel):
     id: int
-    user_id: Optional[str]
-    timestamp: str
-    question: str
-    final_answer: Optional[str]
-    sentiment_label: Optional[str]
-    sentiment_score: Optional[float]
-    keywords: Optional[List[str]]
+    text: str
+    sentiment: Dict[str, float]
+    bow: Dict[str, int]
+    blob_polarity: Dict[str, float]
+    polarity: float
+    subjectivity: float
+    created_at: datetime
 
     class Config:
         orm_mode = True
+
