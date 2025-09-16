@@ -28,12 +28,12 @@ class Settings(BaseSettings):
     default_model_id: str = "dummy-claude-3-haiku"
     
     # Modo de operación (dummy o bedrock)
-    llm_mode: str = "dummy"  # dummy | bedrock
+    llm_mode: str = "bedrock"  # dummy | bedrock
     
     
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra='ignore')
 
-    llm_provider: str = "dummy"
+    llm_provider: str = "bedrock"
     
     # Configuración de autenticación
     secret_key: str = "your-super-secret-key-change-this-in-production"

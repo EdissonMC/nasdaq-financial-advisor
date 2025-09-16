@@ -50,9 +50,11 @@ async def health_check() -> Dict[str, str]:
 async def generate_text(request: LLMRequest, db: Session = Depends(get_db), current_user: Optional[models.User] = Depends(get_optional_current_user)) -> LLMResponse:
     """Generar texto usando LLM"""
     try:
+        print("...............GENERATE SIMPLE ANSWER............")
+        print("request:", request)
         service = get_llm_service()
         response = await service.generate_text(request)
-
+        print("response:", response)
         # Persistir historial si viene session_id
         if request.session_id:
             # Crear conversación si no existe

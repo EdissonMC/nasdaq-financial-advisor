@@ -67,7 +67,7 @@ class BedrockService:
         
         prompt = get_financial_prompt(
             user_query=request.prompt,
-            context="Shares of apple are AAPL: $175, up 2% today, P/E ratio 25.4"
+            context=""  # Sin contexto hardcodeado
         )
         
         
