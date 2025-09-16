@@ -1,28 +1,11 @@
 services:
-  logging_service:
-    build:
-      context: .   # use current folder, not ./sentiment_analysis
-      dockerfile: Dockerfile
-    container_name: logging_service
+  sentiment_api:
+    build: .
+    container_name: sentiment_api
     ports:
       - "8000:8000"
-    depends_on:
-      - db
-    environment:
-      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/sentiment_db
-
-  db:
-    image: postgres:14
-    container_name: sentiment_db
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: sentiment_db
-    ports:
-      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+      - ./app:/app/app
+      - ./data:/app/data  # persists sqlite db
+    environment:
+      - DATABASE_URL=sqlite:////app/data/sentiment.db

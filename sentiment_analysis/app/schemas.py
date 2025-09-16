@@ -1,18 +1,21 @@
 from pydantic import BaseModel
-from typing import Dict
 from datetime import datetime
 
-
-class AnalysisOut(BaseModel):
-    id: int
+class AnalysisBase(BaseModel):
     text: str
-    sentiment: Dict[str, float]
-    bow: Dict[str, int]
-    blob_polarity: Dict[str, float]
+    sentiment_pos: float
+    sentiment_neg: float
+    sentiment_neu: float
+    sentiment_compound: float
     polarity: float
     subjectivity: float
+
+class AnalysisCreate(AnalysisBase):
+    pass
+
+class AnalysisResponse(AnalysisBase):
+    id: int
     created_at: datetime
 
     class Config:
         orm_mode = True
-
