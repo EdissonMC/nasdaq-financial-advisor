@@ -33,7 +33,7 @@ export function getApiConfig(): ApiConfig {
       chatApiUrl: import.meta.env.VITE_CHAT_API_URL || 'http://127.0.0.1:8000/api/v1',
       timeout: 30000,
       topK: 8,
-      simulateIfOffline: true
+      simulateIfOffline: false
     }
   )
 }
@@ -88,13 +88,6 @@ export async function askQuestion(
     return responseJson
   } catch (error) {
     clearTimeout(timeoutId)
-    if (config.simulateIfOffline) {
-      // Fallback local de simulación para desarrollo sin backend
-      const simulated: AskResponse = {
-        answer: 'Simulación local: para respuestas reales conecta el Chat API en Configuración.'
-      }
-      return simulated
-    }
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('La solicitud tardó demasiado. Verifica la URL del API.')
     }
@@ -158,38 +151,24 @@ export async function renameConversationApi(sessionId: string, title: string): P
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const cfg = getApiConfig()
-  try {
-    const res = await fetch(`${cfg.chatApiUrl}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    })
-    if (!res.ok) throw new Error('Login failed')
-    return res.json()
-  } catch (e) {
-    if (cfg.simulateIfOffline) {
-      return { access_token: 'mock-token-123', token_type: 'Bearer' }
-    }
-    throw e
-  }
+  const res = await fetch(`${cfg.chatApiUrl}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  })
+  if (!res.ok) throw new Error('Login failed')
+  return res.json()
 }
 
 export async function register(name: string, email: string, password: string): Promise<{ status: string; message?: string }> {
   const cfg = getApiConfig()
-  try {
-    const res = await fetch(`${cfg.chatApiUrl}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
-    })
-    if (!res.ok) throw new Error('Register failed')
-    return res.json()
-  } catch (e) {
-    if (cfg.simulateIfOffline) {
-      return { status: 'ok', message: 'Usuario registrado (mock)' }
-    }
-    throw e
-  }
+  const res = await fetch(`${cfg.chatApiUrl}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password })
+  })
+  if (!res.ok) throw new Error('Register failed')
+  return res.json()
 }
 
 
