@@ -3,7 +3,7 @@ Dummy LLM service for initial testing
 """
 import random
 import asyncio
-from typing import List
+from typing import List, Dict, Optional
 
 from ..models.llm import LLMRequest, LLMResponse, ChatRequest, ChatResponse, ChatMessage
 from ..core.config import settings
@@ -21,14 +21,29 @@ class DummyLLMService:
             "Risk metrics are essential for a balanced portfolio. What's your risk profile?",
             "Technical indicators suggest several patterns. Do you want to analyze any specific asset?"
         ]
+        # Recordar última respuesta por sesión para evitar repetición inmediata
+        self._last_response_by_session: Dict[str, str] = {}
+        self._last_response_global: Optional[str] = None
     
     async def generate_text(self, request: LLMRequest) -> LLMResponse:
         """Simulate text generation"""
         # Simulate processing latency
         await asyncio.sleep(random.uniform(0.5, 2.0))
         
-        # Select response
-        response_text = random.choice(self.financial_responses)
+        # Seleccionar respuesta aleatoria, evitando repetir la última de la sesión (o global)
+        candidates = self.financial_responses[:]
+        last = None
+        if request.session_id:
+            last = self._last_response_by_session.get(request.session_id)
+        else:
+            last = self._last_response_global
+        if last in candidates and len(candidates) > 1:
+            candidates = [c for c in candidates if c != last]
+        response_text = random.choice(candidates)
+        if request.session_id:
+            self._last_response_by_session[request.session_id] = response_text
+        else:
+            self._last_response_global = response_text
         response_text += f"\n\n[Processing prompt: '{request.prompt[:50]}...']"
         
         return LLMResponse(

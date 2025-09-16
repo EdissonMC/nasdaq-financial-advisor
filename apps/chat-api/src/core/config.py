@@ -2,7 +2,7 @@
 Basic configuration for initial development
 """
 from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 import os
 
@@ -28,10 +28,10 @@ class Settings(BaseSettings):
     default_model_id: str = "dummy-claude-3-haiku"
     
     # Modo de operación (dummy o bedrock)
-    llm_mode: str = "bedrock"  # dummy | bedrock
+    llm_mode: str = "dummy"  # dummy | bedrock
     
     
-    model_config = ConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra='ignore')
 
     llm_provider: str = "dummy"
     
@@ -56,11 +56,6 @@ class Settings(BaseSettings):
     app_name: str = "Financial AI Chatbot API"
     environment: str = "development"
     
-    # CORS
-    allowed_origins: list = ["http://localhost:3000", "http://localhost:5173"]
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    # CORS (no se usa en el arranque; se deja por defecto en middleware)
 # Global configuration instance
 settings = Settings()

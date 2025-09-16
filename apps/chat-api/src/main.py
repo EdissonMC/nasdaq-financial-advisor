@@ -35,6 +35,8 @@ app.add_middleware(
 
 # Include routes
 app.include_router(router, prefix="/api/v1")
+# Incluir rutas de autenticación bajo /api/v1/auth
+app.include_router(auth.router, prefix="/api/v1")
 
 
 @app.get("/")

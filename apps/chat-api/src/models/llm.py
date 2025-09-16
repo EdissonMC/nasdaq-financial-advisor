@@ -11,6 +11,8 @@ class LLMRequest(BaseModel):
     max_tokens: Optional[int] = Field(1000, description="Maximum number of tokens to generate")
     temperature: Optional[float] = Field(0.7, description="Temperature for generation randomness")
     model_id: Optional[str] = Field(None, description="ID of the model to use")
+    session_id: Optional[str] = Field(None, description="Conversation session id to store history")
+    top_k: Optional[int] = Field(None, description="Número de citas/resultados a recuperar (opcional)")
 
 
 class LLMResponse(BaseModel):
