@@ -12,5 +12,7 @@ class Analysis(Base):
     sentiment_neu = Column(Float, nullable=False)
     sentiment_compound = Column(Float, nullable=False)
     polarity = Column(Float, nullable=False)
-    subjectivity = Column(Float, nullable=False)
+    subjectivity = Column(Float, nullable=False)    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    llm_explanation = Column(String, nullable=False, default="No explanation available")
+

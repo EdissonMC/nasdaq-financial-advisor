@@ -2,7 +2,8 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 import nltk
 from sklearn.feature_extraction.text import CountVectorizer
 from textblob import TextBlob
-
+import os
+from openai import OpenAI
 
 
 # Ensure the lexicon is available
@@ -15,7 +16,29 @@ _sia = SentimentIntensityAnalyzer()
 # Initialize CountVectorizer with English stop words
 _vectorizer = CountVectorizer(stop_words='english')
 
-def analyze_text(text: str):
+# Init OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
+def explain_sentiment_with_llm(text: str, analysis: dict) -> str:
+    prompt = f"""
+    The following text was analyzed:
+    Text: "{text}"
+    Sentiment scores: {analysis['sentiment']}
+    Bag of Words: {analysis['bow']}
+    Polarity & Subjectivity: {analysis['blob_polarity']}
+    
+    Please provide a short, clear explanation of the sentiment.
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=150
+    )
+    return response.choices[0].message.content
+
+
+def analyze_text(text: str, explain_with_llm: bool = False):
     """
     Analyzes the input text for sentiment and Bag-of-Words features.
     Subjectivity: Measures the subjectivity of the text. A value close to 1 
@@ -40,9 +63,22 @@ def analyze_text(text: str):
     polarity = blob_sentiment.polarity
     subjectivity = blob_sentiment.subjectivity
 
-    return {
+    result = {
         "text": text,
         "sentiment": sentiment, 
         "bow": bow_dict, 
         "blob_polarity": {"polarity": polarity, "subjectivity": subjectivity}
+
         }
+
+    # Optional LLM enrichment
+    if explain_with_llm:
+        analysis_dict = {
+            "sentiment": sentiment,
+            "bow": bow_dict,
+            "blob_polarity": {"polarity": polarity, "subjectivity": subjectivity}
+        }
+        explanation = explain_sentiment_with_llm(text, analysis_dict)
+        result["llm_explanation"] = explanation
+
+    return result

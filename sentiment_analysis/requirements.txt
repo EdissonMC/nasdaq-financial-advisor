@@ -7,3 +7,4 @@ scikit-learn
 numpy
 pandas
 textblob
+openai>=1.0.0
