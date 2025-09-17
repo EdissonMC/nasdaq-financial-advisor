@@ -25,6 +25,8 @@ services:
   chat-api:
     build: ./apps/chat-api
     container_name: chatapi-backend
+    volumes:
+      - ./apps/chat-api:/app
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432

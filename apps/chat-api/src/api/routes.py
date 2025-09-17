@@ -52,7 +52,9 @@ async def generate_text(request: LLMRequest, db: Session = Depends(get_db), curr
     try:
         print("...............GENERATE SIMPLE ANSWER............")
         print("request:", request)
+        print(f"[DEBUG] settings.llm_mode = {settings.llm_mode}")
         service = get_llm_service()
+        print(f"[DEBUG] LLM service type: {type(service)}")
         response = await service.generate_text(request)
         print("response:", response)
         # Persistir historial si viene session_id

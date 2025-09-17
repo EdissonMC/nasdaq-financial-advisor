@@ -62,12 +62,13 @@ class BedrockService:
         """Generar texto usando Bedrock"""
         if not self.client:
             raise Exception("Bedrock client not initialized")
-             
         
+        print("=== CAMBIO DE PRUEBA EN BEDROCK_SERVICE ===")    
+        print("...............GENERATE SIMPLE ANSWER WITH BEDROCK AWS............")
         
         prompt = get_financial_prompt(
             user_query=request.prompt,
-            context=""  # Sin contexto hardcodeado
+            context="Shares of apple are AAPL: $175, up 2% today, P/E ratio 25.4"
         )
         
         

@@ -30,7 +30,7 @@ export function setApiConfig(config: ApiConfig) {
 export function getApiConfig(): ApiConfig {
   return (
     currentConfig || {
-      chatApiUrl: import.meta.env.VITE_CHAT_API_URL || 'http://127.0.0.1:8000/api/v1',
+      chatApiUrl: import.meta.env.VITE_CHAT_API_URL || 'http://127.0.0.1:8000/api/v1', // http://127.0.0.1:8000/api/v1/generate
       timeout: 30000,
       topK: 8,
       simulateIfOffline: false
@@ -46,6 +46,17 @@ export async function askQuestion(
   temperature?: number
 ): Promise<AskResponse> {
 
+
+//   {
+//         "prompt": "tienes historicos sobre el desempeño de la accion de apple?",
+//         //"model_id": "dummy-claude-3-haiku",
+//         "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+//         "max_tokens": 250,
+//         "temperature": 0.7,
+//         "top_k":0,
+//         "session_id": "id-de-conversacion"
+// }
+
   const config = getApiConfig()
   const payload: Record<string, unknown> = { prompt }
   if (sessionId) payload.session_id = sessionId
@@ -55,8 +66,14 @@ export async function askQuestion(
   if (typeof temperature === 'number') payload.temperature = temperature
 
   // LOG para depuración
-  console.log('[askQuestion] URL:', config.chatApiUrl)
+  console.log('[askQuestion] URL base:', config.chatApiUrl)
   console.log('[askQuestion] Payload:', payload)
+
+  // Limpiar la URL base para evitar duplicados de /generate
+  let baseUrl = config.chatApiUrl.replace(/\/+$/, '') // quita barras al final
+  baseUrl = baseUrl.replace(/\/generate$/, '') // quita /generate si está al final
+  const url = `${baseUrl}/generate`
+  console.log('[askQuestion] URL final:', url)
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), config.timeout || 30000)
@@ -64,16 +81,14 @@ export async function askQuestion(
   try {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (config.authToken) headers['Authorization'] = config.authToken
-//  const res = await fetch(`${config.chatApiUrl}/chat`, {
-  const res = await fetch(`${config.chatApiUrl}/generate`, {
+
+    const res = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
       signal: controller.signal
     })
-    
     clearTimeout(timeoutId)
-    
     if (!res.ok) {
       const text = await res.text().catch(() => '')
       throw new Error(text || `Error ${res.status}: ${res.statusText}`)

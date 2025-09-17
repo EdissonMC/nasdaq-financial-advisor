@@ -13,9 +13,12 @@ def get_llm_service():
     Returns:
         Servicio LLM (dummy o bedrock)
     """
+    print(f"[DEBUG] get_llm_service() llamado. settings.llm_mode = {settings.llm_mode}")
     if settings.llm_mode == "bedrock":
+        print("[DEBUG] Retornando bedrock_service")
         return bedrock_service
     else:
+        print("[DEBUG] Retornando dummy_llm_service")
         return dummy_llm_service
 
 
