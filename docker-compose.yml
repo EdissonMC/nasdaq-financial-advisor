@@ -52,10 +52,16 @@ services:
 
   # Frontend
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
     container_name: chatapi-frontend
+    environment:
+      - DEV=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "${FRONTEND_PORT:-5173}:80"
+      - "${FRONTEND_PORT:-5173}:5173"
     depends_on:
       chat-api:
         condition: service_healthy
