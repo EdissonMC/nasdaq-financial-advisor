@@ -6,6 +6,7 @@ __pycache__/
 *.pyc
 *.env
 venv/
+venv2/
 .env
 .env.*
 
@@ -72,3 +73,6 @@ __pypackages__/
 # Ignore documentation builds
 /docs/_build/
 
+venv2/
+*.pyc
+__pycache__/

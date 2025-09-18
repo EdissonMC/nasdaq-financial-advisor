@@ -140,19 +140,99 @@ class BedrockService:
     
     
     
-    
-    async def chat(self, request: ChatRequest) -> ChatResponse:
-        """Chat conversacional usando Bedrock"""
+ 
+
+    # async def chat(self, request: ChatRequest) -> ChatResponse:
+    #     """Chat conversacional usando Bedrock"""
+    #     if not self.client:
+    #         raise Exception("Bedrock client not initialized")
+        
+    #     # Convertir mensajes al formato de Claude
+    #     # Obtiene el historial de mensajes por session_id
+    #     conv = db.query(models.Conversation).filter(models.Conversation.session_id == session_id).first()
+    #     if not conv:
+    #         return {"messages": []}
+    #     msgs = db.query(models.Message).filter(models.Message.conversation_id == conv.id).order_by(models.Message.created_at.asc()).all()
+    #     print("HISTORIAL DE MENSAJES ENCONTRADOS:"
+    #           for m in msgs:)
+        
+        
+    #     messages = []
+    #     for msg in request.messages:
+    #         messages.append({
+    #             "role": msg.role,
+    #             "content": msg.content
+    #         })
+        
+    #     body = {
+    #         "anthropic_version": "bedrock-2023-05-31",
+    #         "max_tokens": request.max_tokens or settings.bedrock_max_tokens,
+    #         "temperature": request.temperature or settings.bedrock_temperature,
+    #         "messages": messages
+    #     }
+        
+    #     try:
+    #         response = await asyncio.to_thread(
+    #             self.client.invoke_model,
+    #             modelId=request.model_id or settings.bedrock_model_id,
+    #             contentType='application/json',
+    #             accept='application/json',
+    #             body=json.dumps(body)
+    #         )
+            
+    #         response_body = self._process_response(response)
+    #         text = self._extract_text_safely(response_body)
+            
+    #         assistant_message = ChatMessage(
+    #             role="assistant",
+    #             content=text
+    #         )
+            
+    #         return ChatResponse(
+    #             message=assistant_message,
+    #             model_id=request.model_id or settings.bedrock_model_id,
+    #             usage={
+    #                 "input_tokens": response_body['usage']['input_tokens'],
+    #                 "output_tokens": response_body['usage']['output_tokens'],
+    #                 "conversation_turns": len(request.messages)
+    #             }
+    #         )
+            
+    #     except ClientError as e:
+    #         error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+    #         error_message = e.response.get('Error', {}).get('Message', str(e))
+    #         logger.error(f"Bedrock API error [{error_code}]: {error_message}")
+    #         raise Exception(f"Bedrock API error [{error_code}]: {error_message}")
+    #     except json.JSONDecodeError as e:
+    #         logger.error(f"Failed to parse Bedrock response: {e}")
+    #         raise Exception(f"Invalid JSON response from Bedrock: {e}")
+    #     except Exception as e:
+    #         logger.error(f"Unexpected error calling Bedrock: {e}")
+    #         raise Exception(f"Error calling Bedrock: {e}")
+
+
+    async def chat(self, request: ChatRequest, history: list = None) -> ChatResponse:
+        """Chat conversacional usando Bedrock con historial"""
         if not self.client:
             raise Exception("Bedrock client not initialized")
         
-        # Convertir mensajes al formato de Claude
+        # Usar el historial pasado desde el endpoint, o los mensajes del request como fallback
         messages = []
-        for msg in request.messages:
-            messages.append({
-                "role": msg.role,
-                "content": msg.content
-            })
+        
+        if history:
+            # Usar el historial de la base de datos (recomendado)
+            for msg in history:
+                messages.append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
+        else:
+            # Fallback: usar los mensajes del request
+            for msg in request.messages:
+                messages.append({
+                    "role": msg.role,
+                    "content": msg.content
+                })
         
         body = {
             "anthropic_version": "bedrock-2023-05-31",
@@ -184,7 +264,7 @@ class BedrockService:
                 usage={
                     "input_tokens": response_body['usage']['input_tokens'],
                     "output_tokens": response_body['usage']['output_tokens'],
-                    "conversation_turns": len(request.messages)
+                    "conversation_turns": len(messages)
                 }
             )
             
@@ -193,12 +273,34 @@ class BedrockService:
             error_message = e.response.get('Error', {}).get('Message', str(e))
             logger.error(f"Bedrock API error [{error_code}]: {error_message}")
             raise Exception(f"Bedrock API error [{error_code}]: {error_message}")
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Bedrock response: {e}")
-            raise Exception(f"Invalid JSON response from Bedrock: {e}")
         except Exception as e:
             logger.error(f"Unexpected error calling Bedrock: {e}")
             raise Exception(f"Error calling Bedrock: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Instancia global del servicio Bedrock

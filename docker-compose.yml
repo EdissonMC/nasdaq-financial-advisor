@@ -1,6 +1,19 @@
 version: '3.9'
 
 services:
+  # devcontainer:                     # 👈 Nuevo contenedor de desarrollo
+  #   build:
+  #     context: .
+  #     dockerfile: .devcontainer/Dockerfile
+  #   volumes:
+  #     - ..:/workspace:cached         # Monta tu proyecto en /workspace
+  #   command: sleep infinity          # Se queda corriendo "idle"
+  #   networks:
+  #     - chatapi-network
+  #   # Opcional: comparte Docker CLI dentro del contenedor (útil para dev avanzado)
+  #   # volumes:
+  #   #   - /var/run/docker.sock:/var/run/docker.sock
+
   # PostgreSQL Database
   postgres:
     image: postgres:15
@@ -13,6 +26,7 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chatapi_user} -d ${POSTGRES_DB:-chatapi_db}"]
       interval: 5s
@@ -52,12 +66,19 @@ services:
 
   # Frontend
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      target: dev      # <-- agrega esta línea
     container_name: chatapi-frontend
+    environment:
+      - DEV=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "${FRONTEND_PORT:-5173}:80"
+      - "${FRONTEND_PORT:-5173}:5173"
     depends_on:
-      chat-api:
+      chat-api: 
         condition: service_healthy
     networks:
       - chatapi-network

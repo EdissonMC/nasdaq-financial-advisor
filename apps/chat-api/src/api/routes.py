@@ -46,6 +46,7 @@ async def health_check() -> Dict[str, str]:
     }
 
 
+
 @router.post("/generate", response_model=LLMResponse)
 async def generate_text(request: LLMRequest, db: Session = Depends(get_db), current_user: Optional[models.User] = Depends(get_optional_current_user)) -> LLMResponse:
     """Generar texto usando LLM"""
@@ -56,6 +57,7 @@ async def generate_text(request: LLMRequest, db: Session = Depends(get_db), curr
         service = get_llm_service()
         print(f"[DEBUG] LLM service type: {type(service)}")
         response = await service.generate_text(request)
+        #response = await service.chat(request)
         print("response:", response)
         # Persistir historial si viene session_id
         if request.session_id:
@@ -84,16 +86,72 @@ async def generate_text(request: LLMRequest, db: Session = Depends(get_db), curr
         raise HTTPException(status_code=500, detail=f"Error generating text: {str(e)}")
 
 
+
+
+# @router.post("/chat", response_model=ChatResponse)
+# async def chat_conversation(request: ChatRequest, db: Session = Depends(get_db), current_user: Optional[models.User] = Depends(get_optional_current_user)) -> ChatResponse:
+#     """Mantener conversación con LLM"""
+#     try:
+#         service = get_llm_service()
+#         response = await service.chat(request)
+#         # Nota: En este endpoint no persistimos aún porque el frontend no lo usa
+#         return response
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error in chat: {str(e)}")
+
+
 @router.post("/chat", response_model=ChatResponse)
-async def chat_conversation(request: ChatRequest, db: Session = Depends(get_db), current_user: Optional[models.User] = Depends(get_optional_current_user)) -> ChatResponse:
-    """Mantener conversación con LLM"""
+async def chat_conversation(
+    request: ChatRequest,
+    db: Session = Depends(get_db),
+    current_user: Optional[models.User] = Depends(get_optional_current_user)
+) -> ChatResponse:
     try:
+        print("...............GENERATE SIMPLE ANSWER............")
+        print("request:", request)
+        print(f"[DEBUG] settings.llm_mode = {settings.llm_mode}")
         service = get_llm_service()
-        response = await service.chat(request)
-        # Nota: En este endpoint no persistimos aún porque el frontend no lo usa
+        print(f"[DEBUG] LLM service type: {type(service)}")
+
+        # Persistir historial si viene session_id
+        if request.session_id:
+            # Crear conversación si no existe
+            conv = db.query(models.Conversation).filter(models.Conversation.session_id == request.session_id).first()
+            if not conv:
+                conv = models.Conversation(session_id=request.session_id, user_id=(current_user.id if current_user else None))
+                db.add(conv)
+                db.commit()
+                db.refresh(conv)
+
+            # Guardar mensaje del usuario
+            db.add(models.Message(conversation_id=conv.id, role="user", content=request.message.content))
+            db.commit()
+
+            # Recuperar historial de mensajes
+            msgs = (
+                db.query(models.Message)
+                .filter(models.Message.conversation_id == conv.id)
+                .order_by(models.Message.created_at.asc())
+                .all()
+            )
+            history = [{"role": m.role, "content": m.content} for m in msgs]
+
+            # Llamar al servicio LLM con el historial
+            response = await service.chat(history=history, request=request)
+
+            # Guardar mensaje del asistente
+            db.add(models.Message(conversation_id=conv.id, role="assistant", content=response.message.content))
+            db.commit()
+        else:
+            # Si no hay session_id, solo responde normalmente
+            response = await service.chat(request)
+
+        print("response:", response)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error in chat: {str(e)}")
+
+
 
 
 @router.get("/models")
