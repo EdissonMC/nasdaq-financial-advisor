@@ -58,7 +58,8 @@ export async function askQuestion(
 // }
 
   const config = getApiConfig()
-  const payload: Record<string, unknown> = { prompt }
+  // const payload: Record<string, unknown> = { prompt }
+  const payload: Record<string, unknown> = { message: { role: "user", content: prompt } }
   if (sessionId) payload.session_id = sessionId
   if (config.topK) payload.top_k = config.topK
   if (model_id) payload.model_id = model_id
@@ -72,7 +73,7 @@ export async function askQuestion(
   // Limpiar la URL base para evitar duplicados de /generate
   let baseUrl = config.chatApiUrl.replace(/\/+$/, '') // quita barras al final
   baseUrl = baseUrl.replace(/\/generate$/, '') // quita /generate si está al final
-  const url = `${baseUrl}/generate`
+  const url = `${baseUrl}/chat`
   console.log('[askQuestion] URL final:', url)
 
   const controller = new AbortController()
