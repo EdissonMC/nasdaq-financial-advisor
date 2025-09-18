@@ -11,8 +11,17 @@ export type Citation = {
   relevance_score?: number
 }
 
+// Nuevo tipo para message
+export type Message = {
+  role: string
+  content: string
+}
+
+// Actualizado para reflejar la respuesta real del backend
 export type AskResponse = {
-  answer: string
+  message: Message
+  model_id?: string
+  usage?: Record<string, unknown>
   citations?: Citation[]
 }
 
