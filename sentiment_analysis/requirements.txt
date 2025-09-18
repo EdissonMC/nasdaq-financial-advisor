@@ -8,3 +8,6 @@ numpy
 pandas
 textblob
 openai>=1.0.0
+streamlit
+requests
+plotly

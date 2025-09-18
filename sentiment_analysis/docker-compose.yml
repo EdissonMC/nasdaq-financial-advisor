@@ -10,3 +10,16 @@ services:
     volumes:
       - ./data:/data  # persists the sqlite database file outside the container
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  dashboard:
+    build: .
+    container_name: sentiment_dashboard
+    command: streamlit run dashboard/admin_dashboard.py --server.port=8501 --server.address=0.0.0.0
+    ports:
+      - "8501:8501"
+    depends_on:
+      - sentiment_api   # 👈 match the real API service name here
+    environment:
+      - DOCKER_ENV=1   # 👈 add this
+    volumes:
+      - .:/app
