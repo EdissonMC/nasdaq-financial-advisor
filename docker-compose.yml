@@ -1,0 +1,9 @@
+services:
+  doc-processor:
+    build: ./apps/doc-processor
+    env_file: .env
+    volumes:
+      - ./apps/doc-processor:/workspace
+    working_dir: /workspace
+    command: ["python","-m","app.main","--help"]
+    profiles: ["processing"]

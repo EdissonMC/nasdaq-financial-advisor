@@ -1,0 +1,21 @@
+pymupdf==1.24.9
+tiktoken==0.7.0
+pymupdf==1.24.9
+tiktoken==0.7.0
+requests==2.32.3
+pinecone-client==5.0.1
+haystack-ai==2.0.0
+sentence-transformers==2.2.2
+
+# ya tenías
+pymupdf==1.24.9
+tiktoken==0.7.0
+requests==2.32.3
+pinecone-client==5.0.1
+
+# haystack + embeddings locales
+haystack-ai==2.0.0
+sentence-transformers==2.2.2
+huggingface-hub==0.16.4
+transformers==4.35.2
+
