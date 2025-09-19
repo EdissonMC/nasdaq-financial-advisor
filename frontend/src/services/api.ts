@@ -47,6 +47,17 @@ export function getApiConfig(): ApiConfig {
   )
 }
 
+
+
+
+
+
+
+
+
+
+
+
 export async function askQuestion(
   prompt: string,
   sessionId?: string,
@@ -100,6 +111,7 @@ export async function askQuestion(
     })
     clearTimeout(timeoutId)
     if (!res.ok) {
+       console.log('[askQuestion] Respuesta Erronea desde  ', url)
       const text = await res.text().catch(() => '')
       throw new Error(text || `Error ${res.status}: ${res.statusText}`)
     }
