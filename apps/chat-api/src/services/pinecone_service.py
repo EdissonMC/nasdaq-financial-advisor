@@ -1,64 +1,55 @@
+
 import os
-import json
-from sentence_transformers import SentenceTransformer
+from dotenv import load_dotenv
 from pinecone import Pinecone
-from typing import List
 
-CHUNKS_DIR = "/data/outputs/chunks"
+class PineconeService:
+    def __init__(self, namespace="default"):
+        load_dotenv()
+        self.api_key = os.getenv("PINECONE_API_KEY")
+        self.index_name = os.getenv("PINECONE_INDEX_NAME", "financial-docs")
+        self.environment = os.getenv("PINECONE_ENVIRONMENT", "us-east-1")
+        self.namespace = namespace
+        self.pc = Pinecone(api_key=self.api_key, environment=self.environment)
+        self.dense_index = self.pc.Index(self.index_name)
 
-class PineconeSearcher:
-    def __init__(self, 
-                 api_key: str = None, 
-                 index_name: str = None, 
-                 model_name: str = None, 
-                 chunks_dir: str = CHUNKS_DIR):
-        
-        self.api_key = api_key or os.getenv("PINECONE_API_KEY")
-        self.index_name = index_name or os.getenv("PINECONE_INDEX", "financial-docs")
-        self.model_name = model_name or os.getenv("HAYSTACK_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-        self.chunks_dir = chunks_dir
-        self.pc = Pinecone(api_key=self.api_key)
-        self.idx = self.pc.Index(self.index_name)
-        self.model = SentenceTransformer(self.model_name)
-
-    def _read_chunk_text_by_id(self, doc_id: str, chunk_index: int) -> str | None:
-        fp = os.path.join(self.chunks_dir, f"{doc_id}.jsonl")
-        if not os.path.exists(fp):
-            return None
-        with open(fp, encoding="utf-8") as f:
-            for i, line in enumerate(f):
-                if i == int(chunk_index):
-                    rec = json.loads(line)
-                    return rec.get("text")
-        return None
-
-    def search_query(self, query: str, top_k: int = 5):
-        # 1) embed de la pregunta con el MISMO modelo
-        qvec = self.model.encode([query], normalize_embeddings=True)[0].tolist()
-        # 2) consulta a Pinecone
-        res = self.idx.query(vector=qvec, top_k=top_k, include_metadata=True)
-        # 3) imprimir resultados lindos
-        matches: List[dict] = res.get("matches", [])
-        if not matches:
-            print("Sin resultados.")
-            return
-        print(f"\nTop-{top_k} resultados para: {query}\n")
-        for m in matches:
-            md = m.get("metadata", {}) or {}
-            did, cidx = m["id"].split(":")
-            full_text = self._read_chunk_text_by_id(did, int(cidx))
-            comp = md.get("company"); year = md.get("filing_year")
-            dtype = md.get("document_type"); p0, p1 = md.get("page_start"), md.get("page_end")
-            preview = md.get("text_preview") or md.get("section") or ""
-            print(f"score={m['score']:.3f} | {comp} {year} | {dtype} | p.{p0}-{p1} | id={m['id']}")
-            if preview:
-                print(f"  ▶ {preview[:180]}{'...' if len(preview)>180 else ''}")
-            if full_text:
-                print(f"  🧩 {full_text[:400]}{'...' if len(full_text)>400 else ''}")
-        print()
-        
-        
+    def search(self, query, top_k=3):
+        results = self.dense_index.search(
+            namespace=self.namespace,
+            query={
+                "top_k": top_k,
+                "inputs": {
+                    'text': query
+                }
+            }
+        )
+        import pprint; 
+        #pprint.pprint(results)
+        for hit in results['result']['hits']:
+            #print(f"id: {hit['_id']:<5} | score: {round(hit['_score'], 2):<5} | text: {hit['fields']['text']}")
+            #print(f"score: {round(hit['_score'], 2):<5} | text: {hit['fields']['text']}")
+            print(".."*15)
+            print(f" text: {hit['fields']['text']}")
+            print(".."*15)
+            #print(f"id: {hit['_id']:<5} | score: {round(hit['_score'], 2):<5} | category: {hit['fields']['category']:<10} | text: {hit['fields']['chunk_text']:<50}")
 
 if __name__ == "__main__":
-    searcher = PineconeSearcher()
-    searcher.search_query("Apple’s most valuable market", 5)
+    print("==="*30)
+    print("Iniciando búsqueda...")
+    searcher = PineconeService()
+    #query = "how held the shares of american airlines?"
+    #query ="How many passengers boarded American Airlines flights in 2020?"
+    # query ="What was American Airlines' total available liquidity as of December 31, 2020?"
+    # query ="What cost-cutting measures did American Airlines implement in response to the COVID-19 pandemic?"
+    # query ="How many team members at American Airlines took early retirement or long-term leave in 2020?"
+   
+    # APPLE
+    #query ="What factors affect the Company's stock price volatility?"
+    query ="How does the Company handle stock repurchases during volatile periods?"
+    # query ="What are the Company's expectations regarding dividends and share repurchases?"
+    # query ="What factors influence technology company stock performance?"
+    # query="How do share repurchase programs work during market fluctuations?"
+    # query="Are there any guarantees about future dividend payments?"
+    
+    searcher.search(query, top_k=3)
+    print("Búsqueda finalizada.")
