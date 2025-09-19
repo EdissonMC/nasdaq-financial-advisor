@@ -25,14 +25,17 @@ class PineconeService:
         )
         import pprint; 
         #pprint.pprint(results)
-        for hit in results['result']['hits']:
+        # for hit in results['result']['hits']:
             #print(f"id: {hit['_id']:<5} | score: {round(hit['_score'], 2):<5} | text: {hit['fields']['text']}")
             #print(f"score: {round(hit['_score'], 2):<5} | text: {hit['fields']['text']}")
-            print(".."*15)
-            print(f" text: {hit['fields']['text']}")
-            print(".."*15)
             #print(f"id: {hit['_id']:<5} | score: {round(hit['_score'], 2):<5} | category: {hit['fields']['category']:<10} | text: {hit['fields']['chunk_text']:<50}")
-
+            
+            
+            # print(".."*15)
+            # print(f" text: {hit['fields']['text']}")
+            # print(".."*15)
+            
+        return " ".join([hit['fields']['text'] for hit in results['result']['hits']])
 if __name__ == "__main__":
     print("==="*30)
     print("Iniciando búsqueda...")
@@ -45,11 +48,23 @@ if __name__ == "__main__":
    
     # APPLE
     #query ="What factors affect the Company's stock price volatility?"
-    query ="How does the Company handle stock repurchases during volatile periods?"
+    #query ="How does the Company handle stock repurchases during volatile periods?"
     # query ="What are the Company's expectations regarding dividends and share repurchases?"
     # query ="What factors influence technology company stock performance?"
     # query="How do share repurchase programs work during market fluctuations?"
     # query="Are there any guarantees about future dividend payments?"
+    
+    # ¿Qué factores afectan la volatilidad del precio de las acciones de la Compañía?
+    query ="¿Qué factores afectan la volatilidad del precio de las acciones de la Compañía apple?"
+    # ¿Cómo maneja la Compañía las recompras de acciones durante períodos de volatilidad?
+
+    # ¿Cuáles son las expectativas de la Compañía con respecto a los dividendos y la recompra de acciones?
+
+    # ¿Qué factores influyen en el desempeño de las acciones de las empresas tecnológicas?
+
+    # ¿Cómo funcionan los programas de recompra de acciones durante las fluctuaciones del mercado?
+
+    # ¿Existen garantías sobre los pagos futuros de dividendos?
     
     searcher.search(query, top_k=2)
     print("Búsqueda finalizada.")

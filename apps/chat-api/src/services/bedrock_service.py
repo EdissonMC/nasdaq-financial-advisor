@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 from ..models.llm import LLMRequest, LLMResponse, ChatRequest, ChatResponse, ChatMessage
 from ..core.config import settings
 from .prompt_template import get_financial_prompt
-
+from .pinecone_service import PineconeService
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ class BedrockService:
         """Inicializa el cliente de Bedrock"""
         self.client = None
         self._initialize_client()
+        self.pinecone_service = PineconeService()
     
     def _initialize_client(self):
         """Inicializa el cliente de AWS Bedrock"""
@@ -211,37 +212,52 @@ class BedrockService:
     #         raise Exception(f"Error calling Bedrock: {e}")
 
 
-    async def chat(self, request: ChatRequest, history: list = None) -> ChatResponse:
+    async def chat(self, request: ChatRequest, history: list = None, currentMessage: str = "") -> ChatResponse:
         """Chat conversacional usando Bedrock con historial"""
         if not self.client:
             raise Exception("Bedrock client not initialized")
         
         # Usar el historial pasado desde el endpoint, o los mensajes del request como fallback
+        print("=== CAMBIO DE PRUEBA EN BEDROCK_SERVICE ===")
+        print("SOLO EL MENSAJE FINAL ")
+        print(currentMessage)
+        print("***"*30)
+        
+        context = self.pinecone_service.search(currentMessage, top_k=2)
+        # print("CONTEXTO RECUPERADO DE PINECONE:")
+        # print(context)
+        # print("***"*30)
+        
+        current_message_formated=get_financial_prompt(user_query =currentMessage, context=context) 
+        message_format = [
+            {
+                "role": "user", 
+             
+                "content": current_message_formated
+             }
+        ]
         
         
-        print(history[-1])
-        
-        
-        
-        
+        # print("***"*30)
+        # print("MENSAJE FORMATEADO PARA EL PROMPT:") 
+        # print(current_message_formated)
+        # print("***"*30)
         
         messages = []
 
         if history:
-            # Usar el historial de la base de datos (recomendado)
+            # Usar el historial proporcionado
             for msg in history:
                 messages.append({
                     "role": msg["role"],
                     "content": msg["content"]
                 })
-        else:
-            # Fallback: usar los mensajes del request
-            for msg in request.messages:
-                messages.append({
-                    "role": msg.role,
-                    "content": msg.content
-                })
         
+        # Siempre agregar el mensaje actual formateado
+        messages.extend(message_format)
+        print("Mensajes finales enviados a Bedrock:")
+        print(messages)
+
         body = {
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": request.max_tokens or settings.bedrock_max_tokens,
@@ -250,37 +266,19 @@ class BedrockService:
         }
         
         try:
-            # response = await asyncio.to_thread(
-            #     self.client.invoke_model,
-            #     modelId=request.model_id or settings.bedrock_model_id,
-            #     contentType='application/json',
-            #     accept='application/json',
-            #     body=json.dumps(body)
-            # )
+            response = await asyncio.to_thread(
+                self.client.invoke_model,
+                modelId=request.model_id or settings.bedrock_model_id,
+                contentType='application/json',
+                accept='application/json',
+                body=json.dumps(body)
+            )
             
-            # response_body = self._process_response(response)
-            # text = self._extract_text_safely(response_body)
-            
-            
-            
-            # assistant_message = ChatMessage(
-            #     role="assistant",
-            #     content=text
-            # )
-            
-            # return ChatResponse(
-            #     message=assistant_message,
-            #     model_id=request.model_id or settings.bedrock_model_id,
-            #     usage={
-            #         "input_tokens": response_body['usage']['input_tokens'],
-            #         "output_tokens": response_body['usage']['output_tokens'],
-            #         "conversation_turns": len(messages)
-            #     }
-            # )
+            response_body = self._process_response(response)
+            text = self._extract_text_safely(response_body)
             
             
             
-            text="****This is a placeholder response from Bedrock.*******"
             assistant_message = ChatMessage(
                 role="assistant",
                 content=text
@@ -290,11 +288,29 @@ class BedrockService:
                 message=assistant_message,
                 model_id=request.model_id or settings.bedrock_model_id,
                 usage={
-                    "input_tokens": 100,
-                    "output_tokens": 600,
+                    "input_tokens": response_body['usage']['input_tokens'],
+                    "output_tokens": response_body['usage']['output_tokens'],
                     "conversation_turns": len(messages)
                 }
             )
+            
+            
+            # SIMULACIÓN DE RESPUESTA
+            # text="****This is a placeholder response from Bedrock.*******"
+            # assistant_message = ChatMessage(
+            #     role="assistant",
+            #     content=text
+            # )
+            
+            # return ChatResponse(
+            #     message=assistant_message,
+            #     model_id=request.model_id or settings.bedrock_model_id,
+            #     usage={
+            #         "input_tokens": 100,
+            #         "output_tokens": 600,
+            #         "conversation_turns": len(messages)
+            #     }
+            # )
             
             
         except ClientError as e:

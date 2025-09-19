@@ -123,9 +123,7 @@ async def chat_conversation(
                 db.commit()
                 db.refresh(conv)
 
-            # Guardar mensaje del usuario
-            db.add(models.Message(conversation_id=conv.id, role="user", content=request.message.content))
-            db.commit()
+
 
             # Recuperar historial de mensajes
             msgs = (
@@ -137,8 +135,12 @@ async def chat_conversation(
             history = [{"role": m.role, "content": m.content} for m in msgs]
 
             # Llamar al servicio LLM con el historial
-            response = await service.chat(history=history, request=request)
-
+            response = await service.chat(history=history, request=request, currentMessage=request.message.content)
+            
+            # Guardar mensaje del usuario
+            db.add(models.Message(conversation_id=conv.id, role="user", content=request.message.content))
+            db.commit()
+            
             # Guardar mensaje del asistente
             db.add(models.Message(conversation_id=conv.id, role="assistant", content=response.message.content))
             db.commit()
