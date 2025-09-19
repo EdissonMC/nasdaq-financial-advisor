@@ -217,8 +217,16 @@ class BedrockService:
             raise Exception("Bedrock client not initialized")
         
         # Usar el historial pasado desde el endpoint, o los mensajes del request como fallback
-        messages = []
         
+        
+        print(history[-1])
+        
+        
+        
+        
+        
+        messages = []
+
         if history:
             # Usar el historial de la base de datos (recomendado)
             for msg in history:
@@ -242,17 +250,37 @@ class BedrockService:
         }
         
         try:
-            response = await asyncio.to_thread(
-                self.client.invoke_model,
-                modelId=request.model_id or settings.bedrock_model_id,
-                contentType='application/json',
-                accept='application/json',
-                body=json.dumps(body)
-            )
+            # response = await asyncio.to_thread(
+            #     self.client.invoke_model,
+            #     modelId=request.model_id or settings.bedrock_model_id,
+            #     contentType='application/json',
+            #     accept='application/json',
+            #     body=json.dumps(body)
+            # )
             
-            response_body = self._process_response(response)
-            text = self._extract_text_safely(response_body)
+            # response_body = self._process_response(response)
+            # text = self._extract_text_safely(response_body)
             
+            
+            
+            # assistant_message = ChatMessage(
+            #     role="assistant",
+            #     content=text
+            # )
+            
+            # return ChatResponse(
+            #     message=assistant_message,
+            #     model_id=request.model_id or settings.bedrock_model_id,
+            #     usage={
+            #         "input_tokens": response_body['usage']['input_tokens'],
+            #         "output_tokens": response_body['usage']['output_tokens'],
+            #         "conversation_turns": len(messages)
+            #     }
+            # )
+            
+            
+            
+            text="****This is a placeholder response from Bedrock.*******"
             assistant_message = ChatMessage(
                 role="assistant",
                 content=text
@@ -262,11 +290,12 @@ class BedrockService:
                 message=assistant_message,
                 model_id=request.model_id or settings.bedrock_model_id,
                 usage={
-                    "input_tokens": response_body['usage']['input_tokens'],
-                    "output_tokens": response_body['usage']['output_tokens'],
+                    "input_tokens": 100,
+                    "output_tokens": 600,
                     "conversation_turns": len(messages)
                 }
             )
+            
             
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
