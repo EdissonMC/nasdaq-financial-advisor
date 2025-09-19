@@ -13,7 +13,7 @@ class PineconeService:
         self.pc = Pinecone(api_key=self.api_key, environment=self.environment)
         self.dense_index = self.pc.Index(self.index_name)
 
-    def search(self, query, top_k=3):
+    def search(self, query, top_k=2):
         results = self.dense_index.search(
             namespace=self.namespace,
             query={
@@ -51,5 +51,5 @@ if __name__ == "__main__":
     # query="How do share repurchase programs work during market fluctuations?"
     # query="Are there any guarantees about future dividend payments?"
     
-    searcher.search(query, top_k=3)
+    searcher.search(query, top_k=2)
     print("Búsqueda finalizada.")
