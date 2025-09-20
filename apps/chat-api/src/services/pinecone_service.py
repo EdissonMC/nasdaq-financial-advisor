@@ -8,34 +8,33 @@ class PineconeService:
         load_dotenv()
         self.api_key = os.getenv("PINECONE_API_KEY")
         self.index_name = os.getenv("PINECONE_INDEX_NAME", "financial-docs")
-        self.environment = os.getenv("PINECONE_ENVIRONMENT", "us-east-1")
         self.namespace = namespace
-        self.pc = Pinecone(api_key=self.api_key, environment=self.environment)
+        # Nueva API de Pinecone 7.3.0 - sin environment parameter
+        self.pc = Pinecone(api_key=self.api_key)
         self.dense_index = self.pc.Index(self.index_name)
 
     def search(self, query, top_k=2):
-        results = self.dense_index.search(
-            namespace=self.namespace,
-            query={
-                "top_k": top_k,
-                "inputs": {
-                    'text': query
+        try:
+            # Búsqueda con la nueva API de Pinecone
+            results = self.dense_index.search(
+                namespace=self.namespace,
+                query={
+                    "top_k": top_k,
+                    "inputs": {'text': query}
                 }
-            }
-        )
-        import pprint; 
-        #pprint.pprint(results)
-        # for hit in results['result']['hits']:
-            #print(f"id: {hit['_id']:<5} | score: {round(hit['_score'], 2):<5} | text: {hit['fields']['text']}")
-            #print(f"score: {round(hit['_score'], 2):<5} | text: {hit['fields']['text']}")
-            #print(f"id: {hit['_id']:<5} | score: {round(hit['_score'], 2):<5} | category: {hit['fields']['category']:<10} | text: {hit['fields']['chunk_text']:<50}")
+            )
             
-            
-            # print(".."*15)
-            # print(f" text: {hit['fields']['text']}")
-            # print(".."*15)
-            
-        return " ".join([hit['fields']['text'] for hit in results['result']['hits']])
+            # Extraer contextos de los resultados
+            if results and 'result' in results and 'hits' in results['result']:
+                contexts = [hit['fields']['text'] for hit in results['result']['hits'] 
+                           if 'fields' in hit and 'text' in hit['fields']]
+                return " ".join(contexts) if contexts else "No relevant financial context found."
+            else:
+                return "No relevant financial context found."
+                
+        except Exception as e:
+            print(f"Error in Pinecone search: {e}")
+            return "Financial context not available due to search service error."
 if __name__ == "__main__":
     print("==="*30)
     print("Iniciando búsqueda...")

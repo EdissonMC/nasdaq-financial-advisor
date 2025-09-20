@@ -218,15 +218,15 @@ class BedrockService:
             raise Exception("Bedrock client not initialized")
         
         # Usar el historial pasado desde el endpoint, o los mensajes del request como fallback
-        print("=== CAMBIO DE PRUEBA EN BEDROCK_SERVICE ===")
-        print("SOLO EL MENSAJE FINAL ")
-        print(currentMessage)
-        print("***"*30)
         
-        context = self.pinecone_service.search(currentMessage, top_k=2)
-        # print("CONTEXTO RECUPERADO DE PINECONE:")
-        # print(context)
-        # print("***"*30)
+        # Recuperar contexto relevante de Pinecone para enriquecer la respuesta
+        try:
+            context = self.pinecone_service.search(currentMessage, top_k=2)
+            logger.info("Contexto recuperado de Pinecone para enriquecer respuesta")
+            logger.debug(f"Contexto: {context}")
+        except Exception as e:
+            logger.error(f"Error getting context from Pinecone: {e}", exc_info=True)
+            context = "No context available due to Pinecone error"
         
         current_message_formated=get_financial_prompt(user_query =currentMessage, context=context) 
         message_format = [
@@ -266,6 +266,9 @@ class BedrockService:
         }
         
         try:
+            logger.info(f"Sending request to Bedrock with model: {request.model_id or settings.bedrock_model_id}")
+            logger.info(f"Request body: {json.dumps(body, indent=2)}")
+            
             response = await asyncio.to_thread(
                 self.client.invoke_model,
                 modelId=request.model_id or settings.bedrock_model_id,
@@ -274,7 +277,9 @@ class BedrockService:
                 body=json.dumps(body)
             )
             
+            logger.info(f"Raw response from Bedrock: {response}")
             response_body = self._process_response(response)
+            logger.info(f"Parsed response body: {json.dumps(response_body, indent=2)}")
             text = self._extract_text_safely(response_body)
             
             
@@ -316,11 +321,15 @@ class BedrockService:
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             error_message = e.response.get('Error', {}).get('Message', str(e))
-            logger.error(f"Bedrock API error [{error_code}]: {error_message}")
-            raise Exception(f"Bedrock API error [{error_code}]: {error_message}")
+            logger.error(f"Bedrock ClientError [{error_code}]: {error_message}")
+            logger.error(f"Full error response: {e.response}")
+            # Re-raise the original exception for full stack trace
+            raise e
         except Exception as e:
             logger.error(f"Unexpected error calling Bedrock: {e}")
-            raise Exception(f"Error calling Bedrock: {e}")
+            logger.error(f"Full exception details:", exc_info=True)
+            # Re-raise the original exception for full stack trace
+            raise e
 
 
 

@@ -43,9 +43,7 @@ passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
 pydantic[email]==2.11.1
 
+# ===== VECTOR DATABASE =====
+pinecone==7.3.0
 
-
-
-pinecone-client==5.0.1
-sentence-transformers == 2.2.2
-huggingface-hub >= 0.14.0, < 0.26.0
+# huggingface-hub >= 0.14.0, < 0.26.0
