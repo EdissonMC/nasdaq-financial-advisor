@@ -1,7 +1,7 @@
 """
 Basic configuration for initial development
 """
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 import os
@@ -28,34 +28,61 @@ class Settings(BaseSettings):
     default_model_id: str = "dummy-claude-3-haiku"
     
     # Modo de operación (dummy o bedrock)
-    llm_mode: str = "dummy"  # dummy | bedrock
-    
-    
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra='ignore')
-
-    llm_provider: str = "dummy"
+    llm_mode: str = "bedrock"  # dummy | bedrock
+    llm_provider: str = "bedrock"
     
     # Configuración de autenticación
     secret_key: str = "your-super-secret-key-change-this-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
     
-    # Configuración de PostgreSQL
-    postgres_user: str = "chatapi_user"
-    postgres_password: str = "chatapi_password"
-    postgres_host: str = "localhost"
-    postgres_port: int = 5432
-    postgres_db: str = "chatapi_db"
-    
-    # URL de base de datos construida automáticamente
-    @property
-    def database_url(self) -> str:
-        return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+    # Configuración de PostgreSQL (cargadas desde .env)
+    postgres_user: str = Field(default="chatapi_user", env="POSTGRES_USER")
+    postgres_password: str = Field(default="chatapi_password", env="POSTGRES_PASSWORD")
+    postgres_host: str = Field(default="localhost", env="POSTGRES_HOST")
+    postgres_port: int = Field(default=5432, env="POSTGRES_PORT")
+    postgres_db: str = Field(default="chatapi_db", env="POSTGRES_DB")
     
     # Configuración de la aplicación
     app_name: str = "Financial AI Chatbot API"
     environment: str = "development"
     
-    # CORS (no se usa en el arranque; se deja por defecto en middleware)
+    # Configuración del modelo
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        env_file_encoding="utf-8", 
+        extra='ignore'
+    )
+    
+    def __init__(self, **kwargs):
+        """Initialize settings and configure environment variables"""
+        super().__init__(**kwargs)
+        
+        # Configure encoding environment variables after initialization
+        os.environ['PGCLIENTENCODING'] = 'UTF8'
+        os.environ['LC_ALL'] = 'C'
+        os.environ['LANG'] = 'C'
+    
+    @property
+    def database_url(self) -> str:
+        """Construct database URL with proper encoding"""
+        from urllib.parse import quote_plus
+        
+        # Validate required database fields
+        if not self.postgres_user or not self.postgres_db:
+            raise ValueError("Database user and database name are required")
+        
+        # URL encode the password to handle special characters
+        encoded_password = quote_plus(self.postgres_password) if self.postgres_password else ""
+        
+        # Construct URL with encoding parameters
+        base_url = f"postgresql://{self.postgres_user}:{encoded_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        
+        # Add encoding parameters (remove options from URL, set in connect_args)
+        encoding_params = "client_encoding=utf8"
+        
+        return f"{base_url}?{encoding_params}"
+
+
 # Global configuration instance
 settings = Settings()

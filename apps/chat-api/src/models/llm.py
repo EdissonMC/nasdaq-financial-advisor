@@ -5,15 +5,6 @@ from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 
-class LLMRequest(BaseModel):
-    """Request model for LLM operations"""
-    prompt: str = Field(..., description="Prompt for the LLM")
-    max_tokens: Optional[int] = Field(1000, description="Maximum number of tokens to generate")
-    temperature: Optional[float] = Field(0.7, description="Temperature for generation randomness")
-    model_id: Optional[str] = Field(None, description="ID of the model to use")
-    session_id: Optional[str] = Field(None, description="Conversation session id to store history")
-    top_k: Optional[int] = Field(None, description="Número de citas/resultados a recuperar (opcional)")
-
 
 class LLMResponse(BaseModel):
     """Response model from LLM operations"""
@@ -28,12 +19,24 @@ class ChatMessage(BaseModel):
     content: str = Field(..., description="Content of the message")
 
 
-class ChatRequest(BaseModel):
-    """Request model for conversational chat"""
-    messages: List[ChatMessage] = Field(..., description="List of conversation messages")
+class LLMRequest(BaseModel):
+    """Request model for LLM operations"""
+    prompt: str = Field(..., description="Prompt for the LLM")
     max_tokens: Optional[int] = Field(1000, description="Maximum number of tokens to generate")
     temperature: Optional[float] = Field(0.7, description="Temperature for generation randomness")
     model_id: Optional[str] = Field(None, description="ID of the model to use")
+    session_id: Optional[str] = Field(None, description="Conversation session id to store history")
+    top_k: Optional[int] = Field(None, description="Número de citas/resultados a recuperar (opcional)")
+
+
+class ChatRequest(BaseModel):
+    """Request model for conversational chat"""
+    message: ChatMessage = Field(..., description="Response message from the assistant")
+    max_tokens: Optional[int] = Field(1000, description="Maximum number of tokens to generate")
+    temperature: Optional[float] = Field(0.7, description="Temperature for generation randomness")
+    model_id: Optional[str] = Field(None, description="ID of the model to use")
+    session_id: Optional[str] = Field(None, description="Conversation session id to store history")
+    top_k: Optional[int] = Field(None, description="Número de citas/resultados a recuperar (opcional)")
 
 
 class ChatResponse(BaseModel):
@@ -41,3 +44,12 @@ class ChatResponse(BaseModel):
     message: ChatMessage = Field(..., description="Response message from the assistant")
     model_id: str = Field(..., description="Model used for generation")
     usage: Dict[str, Any] = Field(default_factory=dict, description="Usage information")
+    
+    
+    
+# class ChatRequest(BaseModel):
+#     """Request model for conversational chat"""
+#     messages: List[ChatMessage] = Field(..., description="List of conversation messages")
+#     max_tokens: Optional[int] = Field(1000, description="Maximum number of tokens to generate")
+#     temperature: Optional[float] = Field(0.7, description="Temperature for generation randomness")
+#     model_id: Optional[str] = Field(None, description="ID of the model to use")

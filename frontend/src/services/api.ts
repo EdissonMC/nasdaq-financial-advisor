@@ -11,8 +11,17 @@ export type Citation = {
   relevance_score?: number
 }
 
+// Nuevo tipo para message
+export type Message = {
+  role: string
+  content: string
+}
+
+// Actualizado para reflejar la respuesta real del backend
 export type AskResponse = {
-  answer: string
+  message: Message
+  model_id?: string
+  usage?: Record<string, unknown>
   citations?: Citation[]
 }
 
@@ -38,6 +47,25 @@ export function getApiConfig(): ApiConfig {
   )
 }
 
+// Función auxiliar para limpiar URLs y evitar /generate duplicado
+function getCleanBaseUrl(): string {
+  const config = getApiConfig()
+  let baseUrl = config.chatApiUrl.replace(/\/+$/, '') // quita barras al final
+  baseUrl = baseUrl.replace(/\/generate$/, '') // quita /generate si está al final
+  return baseUrl
+}
+
+
+
+
+
+
+
+
+
+
+
+
 export async function askQuestion(
   prompt: string,
   sessionId?: string,
@@ -46,8 +74,20 @@ export async function askQuestion(
   temperature?: number
 ): Promise<AskResponse> {
 
+
+//   {
+//         "prompt": "tienes historicos sobre el desempeño de la accion de apple?",
+//         //"model_id": "dummy-claude-3-haiku",
+//         "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+//         "max_tokens": 250,
+//         "temperature": 0.7,
+//         "top_k":0,
+//         "session_id": "id-de-conversacion"
+// }
+
   const config = getApiConfig()
-  const payload: Record<string, unknown> = { prompt }
+  // const payload: Record<string, unknown> = { prompt }
+  const payload: Record<string, unknown> = { message: { role: "user", content: prompt } }
   if (sessionId) payload.session_id = sessionId
   if (config.topK) payload.top_k = config.topK
   if (model_id) payload.model_id = model_id
@@ -55,8 +95,13 @@ export async function askQuestion(
   if (typeof temperature === 'number') payload.temperature = temperature
 
   // LOG para depuración
-  console.log('[askQuestion] URL:', config.chatApiUrl)
+  console.log('[askQuestion] URL base:', config.chatApiUrl)
   console.log('[askQuestion] Payload:', payload)
+
+  // Usar la función auxiliar para obtener URL limpia
+  const baseUrl = getCleanBaseUrl()
+  const url = `${baseUrl}/chat`
+  console.log('[askQuestion] URL final:', url)
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), config.timeout || 30000)
@@ -64,17 +109,16 @@ export async function askQuestion(
   try {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (config.authToken) headers['Authorization'] = config.authToken
-//  const res = await fetch(`${config.chatApiUrl}/chat`, {
-  const res = await fetch(`${config.chatApiUrl}/generate`, {
+
+    const res = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
       signal: controller.signal
     })
-    
     clearTimeout(timeoutId)
-    
     if (!res.ok) {
+       console.log('[askQuestion] Respuesta Erronea desde  ', url)
       const text = await res.text().catch(() => '')
       throw new Error(text || `Error ${res.status}: ${res.statusText}`)
     }
@@ -97,7 +141,8 @@ export async function askQuestion(
 
 export async function getHistory(sessionId: string): Promise<{ messages: Array<{ id: string; role: 'user'|'assistant'; content: string; timestamp?: string }> }> {
   const cfg = getApiConfig()
-  const url = new URL(`${cfg.chatApiUrl}/chat/history`)
+  const baseUrl = getCleanBaseUrl()
+  const url = new URL(`${baseUrl}/chat/history`)
   url.searchParams.set('session_id', sessionId)
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
@@ -108,7 +153,8 @@ export async function getHistory(sessionId: string): Promise<{ messages: Array<{
 
 export async function deleteHistory(sessionId: string): Promise<{ deleted: number }> {
   const cfg = getApiConfig()
-  const url = new URL(`${cfg.chatApiUrl}/chat/history`)
+  const baseUrl = getCleanBaseUrl()
+  const url = new URL(`${baseUrl}/chat/history`)
   url.searchParams.set('session_id', sessionId)
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
@@ -120,54 +166,58 @@ export async function deleteHistory(sessionId: string): Promise<{ deleted: numbe
 // ===== Conversaciones estilo ChatGPT =====
 export async function listConversations(): Promise<{ conversations: Array<{ session_id: string; title: string; updated_at?: string; created_at?: string }> }> {
   const cfg = getApiConfig()
+  const baseUrl = getCleanBaseUrl()
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
-  const res = await fetch(`${cfg.chatApiUrl}/conversations`, { headers })
+  const res = await fetch(`${baseUrl}/conversations`, { headers })
   if (!res.ok) throw new Error('No se pudo listar conversaciones')
   return res.json()
 }
 
 export async function createConversation(sessionId: string, title?: string): Promise<{ session_id: string; title: string }> {
   const cfg = getApiConfig()
+  const baseUrl = getCleanBaseUrl()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
-  const res = await fetch(`${cfg.chatApiUrl}/conversations`, {
+  const res = await fetch(`${baseUrl}/conversations`, {
     method: 'POST', headers, body: JSON.stringify({ session_id: sessionId, title })
   })
   if (!res.ok) throw new Error('No se pudo crear la conversación')
   return res.json()
 }
 
-export async function renameConversationApi(sessionId: string, title: string): Promise<{ session_id: string; title: string }> {
+export async function renameConversationApi(sessionId: string, newTitle: string): Promise<void> {
   const cfg = getApiConfig()
+  const baseUrl = getCleanBaseUrl()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
-  const res = await fetch(`${cfg.chatApiUrl}/conversations/${sessionId}`, {
-    method: 'PATCH', headers, body: JSON.stringify({ title })
+  const res = await fetch(`${baseUrl}/conversations/${sessionId}/rename`, {
+    method: 'PUT', headers, body: JSON.stringify({ title: newTitle })
   })
   if (!res.ok) throw new Error('No se pudo renombrar la conversación')
+}
+
+export async function login(email: string, password: string): Promise<{ access_token: string; token_type: string }> {
+  const cfg = getApiConfig()
+  const baseUrl = getCleanBaseUrl()
+  const res = await fetch(`${baseUrl}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ username: email, password })
+  })
+  if (!res.ok) throw new Error('Error en el login')
   return res.json()
 }
 
-export async function login(email: string, password: string): Promise<LoginResponse> {
+export async function register(email: string, password: string): Promise<{ message: string }> {
   const cfg = getApiConfig()
-  const res = await fetch(`${cfg.chatApiUrl}/auth/login`, {
+  const baseUrl = getCleanBaseUrl()
+  const res = await fetch(`${baseUrl}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
   })
-  if (!res.ok) throw new Error('Login failed')
-  return res.json()
-}
-
-export async function register(name: string, email: string, password: string): Promise<{ status: string; message?: string }> {
-  const cfg = getApiConfig()
-  const res = await fetch(`${cfg.chatApiUrl}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password })
-  })
-  if (!res.ok) throw new Error('Register failed')
+  if (!res.ok) throw new Error('Error en el registro')
   return res.json()
 }
 
