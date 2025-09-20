@@ -39,7 +39,7 @@ export function setApiConfig(config: ApiConfig) {
 export function getApiConfig(): ApiConfig {
   return (
     currentConfig || {
-      chatApiUrl: import.meta.env.VITE_CHAT_API_URL || 'http://127.0.0.1:8000/api/v1', // http://127.0.0.1:8000/api/v1/generate
+      chatApiUrl: import.meta.env.VITE_CHAT_API_URL || 'http://127.0.0.1:8000/api/v1',
       timeout: 30000,
       topK: 8,
       simulateIfOffline: false
