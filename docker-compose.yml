@@ -70,6 +70,28 @@ services:
     env_file:
       - ./apps/chat-api/.env
 
+  sentiment-api:
+    build: ./sentiment_analysis
+    container_name: sentiment-analysis
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=chatapi_user
+      - POSTGRES_PASSWORD=chatapi_password
+      - POSTGRES_DB=chatapi_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - API_PORT=8001
+      - DEBUG=true
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chatapi-network
+    env_file:
+      - ./sentiment_analysis/.env
+
   # Frontend
   frontend:
     build:
