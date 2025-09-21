@@ -125,7 +125,22 @@ export function App() {
     setLoading(true)
     try {
       const data = await askQuestion(text, cid)
-      const bot: ChatMessage = { id: crypto.randomUUID(), role: 'assistant', content: data.answer ?? 'Sin respuesta disponible.', citations: data.citations }
+      console.log('[handleSend] Respuesta del backend : >', data)
+
+      // const bot: ChatMessage = { 
+      //   id: crypto.randomUUID(), 
+      //   role: 'assistant', 
+      //   content: data.answer ?? 'Sin respuesta disponible.', citations: data.citations }
+      const allowedRoles = ['assistant', 'user', 'system'] as const;
+    const role = allowedRoles.includes(data.message?.role as any) ? data.message?.role as 'assistant' | 'user' | 'system' : 'assistant';
+
+      const bot: ChatMessage = {
+        id: crypto.randomUUID(),
+        role,
+        content: data.message?.content ?? 'Sin respuesta disponible.',
+        citations: data.citations
+        }
+      
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, bot], updatedAt: Date.now() } : c))
       if (activeConv.title === 'Nueva conversación') {
         const inferred = text.slice(0, 40).trim() || 'Conversación'

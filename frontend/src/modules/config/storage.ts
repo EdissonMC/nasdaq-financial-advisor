@@ -15,8 +15,13 @@ export function loadConfig(): ApiConfig {
     if (!stored) return DEFAULT_CONFIG
     
     const parsed = JSON.parse(stored) as ApiConfig
+    
+    
+    let cleanUrl = parsed.chatApiUrl || (parsed as any).baseUrl || DEFAULT_CONFIG.chatApiUrl
+    cleanUrl = cleanUrl.replace(/\/generate$/, '') // quitar /generate al final
+    
     return {
-      chatApiUrl: parsed.chatApiUrl || (parsed as any).baseUrl || DEFAULT_CONFIG.chatApiUrl,
+      chatApiUrl: cleanUrl,
       timeout: parsed.timeout || DEFAULT_CONFIG.timeout,
       topK: parsed.topK || DEFAULT_CONFIG.topK,
       simulateIfOffline: typeof parsed.simulateIfOffline === 'boolean' ? parsed.simulateIfOffline : DEFAULT_CONFIG.simulateIfOffline,
