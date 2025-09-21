@@ -15,4 +15,5 @@ class Analysis(Base):
     subjectivity = Column(Float, nullable=False)    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     llm_explanation = Column(String, nullable=False, default="No explanation available")
+    user_id = Column(Integer, nullable=True)
 

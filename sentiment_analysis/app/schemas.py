@@ -11,7 +11,7 @@ class AnalysisBase(BaseModel):
     subjectivity: float
     created_at: datetime | None = None
     llm_explanation: str | None = None
-
+    user_id: int | None = None
 
 class AnalysisCreate(AnalysisBase):
     pass
@@ -28,6 +28,7 @@ class AnalysisResponse(BaseModel):
     subjectivity: float
     created_at: datetime | None = None
     llm_explanation: str
+    user_id: int | None = None
 
     class Config:
         from_attributes = True  # ✅ Required in Pydantic v2

@@ -3,10 +3,10 @@ import requests
 import pandas as pd
 import plotly.express as px
 
-# API_URL = "http://localhost:8000"  # FastAPI service URL
+# API_URL = "http://localhost:8001"  # FastAPI service URL
 
 # When running inside Docker
-API_URL = "http://sentiment_api:8000"
+API_URL = "http://sentiment_api:8001"
 
 st.set_page_config(page_title="Sentiment Analysis Admin", layout="wide")
 st.title("📊 Sentiment Analysis Dashboard")

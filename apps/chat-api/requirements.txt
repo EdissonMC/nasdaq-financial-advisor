@@ -42,3 +42,5 @@ boto3==1.40.25
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
 pydantic[email]==2.11.1
+
+httpx>=0.25.0
