@@ -1,18 +1,38 @@
 version: '3.9'
 
 services:
+  # devcontainer:                     # 👈 Nuevo contenedor de desarrollo
+  #   build:
+  #     context: .
+  #     dockerfile: .devcontainer/Dockerfile
+  #   volumes:
+  #     - ..:/workspace:cached         # Monta tu proyecto en /workspace
+  #   command: sleep infinity          # Se queda corriendo "idle"
+  #   networks:
+  #     - chatapi-network
+  #   # Opcional: comparte Docker CLI dentro del contenedor (útil para dev avanzado)
+  #   # volumes:
+  #   #   - /var/run/docker.sock:/var/run/docker.sock
+
   # PostgreSQL Database
   postgres:
     image: postgres:15
     container_name: chatapi-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-chatapi_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatapi_password}
-      POSTGRES_DB: ${POSTGRES_DB:-chatapi_db}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+      - LC_ALL=en_US.UTF-8
+      - LANG=en_US.UTF-8
+      - POSTGRES_USER=${POSTGRES_USER:-chatapi_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-chatapi_password}
+      - POSTGRES_DB=${POSTGRES_DB:-chatapi_db}
+      # POSTGRES_USER: ${POSTGRES_USER:-chatapi_user}
+      # POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chatapi_password}
+      # POSTGRES_DB: ${POSTGRES_DB:-chatapi_db}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chatapi_user} -d ${POSTGRES_DB:-chatapi_db}"]
       interval: 5s
@@ -25,6 +45,8 @@ services:
   chat-api:
     build: ./apps/chat-api
     container_name: chatapi-backend
+    volumes:
+      - ./apps/chat-api:/app
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
@@ -48,14 +70,43 @@ services:
     env_file:
       - ./apps/chat-api/.env
 
+  sentiment-api:
+    build: ./sentiment_analysis
+    container_name: sentiment-analysis
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=chatapi_user
+      - POSTGRES_PASSWORD=chatapi_password
+      - POSTGRES_DB=chatapi_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - API_PORT=8001
+      - DEBUG=true
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chatapi-network
+    env_file:
+      - ./sentiment_analysis/.env
+
   # Frontend
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      target: dev      # <-- agrega esta línea
     container_name: chatapi-frontend
+    environment:
+      - DEV=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "${FRONTEND_PORT:-5173}:80"
+      - "${FRONTEND_PORT:-5173}:5173"
     depends_on:
-      chat-api:
+      chat-api: 
         condition: service_healthy
     networks:
       - chatapi-network

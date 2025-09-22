@@ -42,3 +42,8 @@ boto3==1.40.25
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
 pydantic[email]==2.11.1
+
+# ===== VECTOR DATABASE =====
+pinecone==7.3.0
+# huggingface-hub >= 0.14.0, < 0.26.0
+httpx>=0.25.0

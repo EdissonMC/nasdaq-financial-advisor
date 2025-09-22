@@ -35,5 +35,5 @@ except Exception as e:
 "
 
 # Iniciar la aplicacion
-echo "Iniciando la aplicacion en puerto 8000..."
-exec uvicorn src.main:app --host 0.0.0.0 --port 8000
+echo "Iniciando la aplicacion en puerto 8000... (hot reload)"
+exec uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
