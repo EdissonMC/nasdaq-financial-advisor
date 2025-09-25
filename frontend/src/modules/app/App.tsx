@@ -134,13 +134,16 @@ export function App() {
       const allowedRoles = ['assistant', 'user', 'system'] as const;
     const role = allowedRoles.includes(data.message?.role as any) ? data.message?.role as 'assistant' | 'user' | 'system' : 'assistant';
 
-      const bot: ChatMessage = {
+      const bot: ChatMessage & {metadata?: any} = {
         id: crypto.randomUUID(),
         role,
         content: data.message?.content ?? 'Sin respuesta disponible.',
-        citations: data.citations
+        citations: data.citations,
+        metadata: {
+          request_feedback: data.request_feedback  
         }
-      
+      }
+      console.log('🤖 Assistant message with metadata:', bot);
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, bot], updatedAt: Date.now() } : c))
       if (activeConv.title === 'Nueva conversación') {
         const inferred = text.slice(0, 40).trim() || 'Conversación'

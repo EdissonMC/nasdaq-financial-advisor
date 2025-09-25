@@ -72,7 +72,7 @@ export async function askQuestion(
   model_id?: string,
   max_tokens?: number,
   temperature?: number
-): Promise<AskResponse> {
+): Promise<ChatResponse> {
 
 
 //   {
@@ -202,23 +202,81 @@ export async function login(email: string, password: string): Promise<{ access_t
   const baseUrl = getCleanBaseUrl()
   const res = await fetch(`${baseUrl}/auth/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ username: email, password })
+    headers: { 'Content-Type': 'application/json'},
+    body: JSON.stringify({ 
+      email,      // ✅ CORRECTO
+      password    // ✅ CORRECTO
+    })
   })
-  if (!res.ok) throw new Error('Error en el login')
+  if (!res.ok) {
+    const errorText = await res.text();  // ✅ AÑADIR para ver error completo
+    console.error('Login error response:', errorText);
+    throw new Error(`Login failed: ${res.status} ${errorText}`)
+  }
   return res.json()
 }
 
-export async function register(email: string, password: string): Promise<{ message: string }> {
+export async function register(name: string,email: string, password: string): Promise<{ message: string }> {
   const cfg = getApiConfig()
   const baseUrl = getCleanBaseUrl()
-  const res = await fetch(`${baseUrl}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  })
-  if (!res.ok) throw new Error('Error en el registro')
-  return res.json()
+  const payload = { name, email, password };
+  console.log('🔵 REQUEST:', payload);
+  try {
+    const res = await fetch(`${baseUrl}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    console.log('🔵 RESPONSE STATUS:', res.status);
+    console.log('🔵 RESPONSE HEADERS:', [...res.headers.entries()]);
+    console.log('🔵 CONTENT-LENGTH:', res.headers.get('content-length'));
+    console.log('🔵 CONTENT-TYPE:', res.headers.get('content-type'));
+    // Intentar leer el body de diferentes maneras
+    const responseText = await res.text();
+    console.log('🔵 RESPONSE TEXT LENGTH:', responseText.length);
+    console.log('🔵 RESPONSE TEXT:', responseText);
+    
+    if (!responseText) {
+      throw new Error('Empty response body');
+    }
+    
+    const jsonData = JSON.parse(responseText);
+    console.log('🟢 PARSED JSON:', jsonData);
+    
+    return jsonData;
+  } catch (error) {
+    console.error('🔴 FETCH ERROR:', error);
+    throw error;
+  }
 }
 
 
+export interface ChatResponse extends AskResponse {
+  request_feedback?: boolean;  // ✅ Variable booleana para feedback
+}
+
+export interface FeedbackRequest {
+  feedback_text: string;
+  rating?: number;
+}
+
+export async function submitFeedback(feedbackData: FeedbackRequest): Promise<any> {
+  const cfg = getApiConfig()
+  const baseUrl = getCleanBaseUrl()
+  
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (cfg.authToken) headers['Authorization'] = cfg.authToken
+  
+  const res = await fetch(`${baseUrl}/feedback`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(feedbackData)
+  })
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    console.error('Feedback error:', errorData);
+    throw new Error(errorData.detail || 'Error sending feedback')
+  }
+  return res.json()
+}

@@ -2,9 +2,8 @@ from pydantic import BaseModel, EmailStr, validator, ConfigDict
 from typing import Optional
 from datetime import datetime
 
-# AJUSTADO: Para registro - el frontend envía "name" no "full_name"
 class UserCreate(BaseModel):
-    name: str  # Cambiado de full_name a name
+    name: str  
     email: EmailStr
     password: str
     
@@ -44,6 +43,23 @@ class RegisterResponse(BaseModel):
     status: str = "ok"
     message: Optional[str] = None
 
+class FeedbackRequest(BaseModel):
+    feedback_text: str
+    rating: Optional[int] = None  # 1-5 rating opcional
+    @validator('feedback_text')
+    def validate_feedback_text(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Feedback text is required')
+        if len(v.strip()) < 10:
+            raise ValueError('Feedback must be at least 10 characters long')
+        return v.strip()
+    
+    @validator('rating')
+    def validate_rating(cls, v):
+        if v is not None and (v < 1 or v > 5):
+            raise ValueError('Rating must be between 1 and 5')
+        return v
+    
 # Para login (request)
 class UserLogin(BaseModel):
     email: EmailStr

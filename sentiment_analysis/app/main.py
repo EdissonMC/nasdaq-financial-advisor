@@ -148,6 +148,19 @@ def get_analyses(
     analyses = query.order_by(models.Analysis.created_at.desc()).limit(limit).all()
     return analyses
 
+
+@app.get("/analyses/{analysis_id}", response_model=schemas.AnalysisResponse)
+def get_analysis_by_id(analysis_id: int, db: Session = Depends(get_db)):
+    """Get specific analysis by ID"""
+    try:
+        analysis = db.query(models.Analysis).filter(models.Analysis.id == analysis_id).first()
+        if not analysis:
+            raise HTTPException(status_code=404, detail="Analysis not found")
+        return analysis
+    except Exception as e:
+        logger.error(f"Error fetching analysis {analysis_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("API_PORT", 8001))  # ✅ CHANGE from 8000 to 8001

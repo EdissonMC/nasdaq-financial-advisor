@@ -15,6 +15,12 @@ from ..core.config import settings
 from ..db.session import get_db
 from ..api.dependencies import get_optional_current_user, get_current_active_user
 from ..db import models
+from src.models.user import FeedbackRequest 
+from src.services.sentiment_client import sentiment_client
+from sqlalchemy import func
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -113,6 +119,41 @@ async def chat_conversation(
         service = get_llm_service()
         print(f"[DEBUG] LLM service type: {type(service)}")
 
+        
+        request_feedback = False
+
+        if current_user:
+            print(f"🔍 DEBUG: current_user existe = {current_user.id}")
+            try:
+                # Analizar sentimiento del mensaje del usuario
+                user_sentiment = await sentiment_client.analyze_text(
+                    text=request.message.content,
+                    explain_with_llm=False,
+                    user_id=current_user.id
+                )
+                print(f"🔍 DEBUG: user_sentiment completo = {user_sentiment}")
+                
+                has_sentiment = user_sentiment is not None
+                compound_score = user_sentiment.get('sentiment_compound', 0) if user_sentiment else 0
+                is_negative = compound_score < -0.1
+                
+                print(f"🔍 DEBUG: has_sentiment = {has_sentiment}")
+                print(f"🔍 DEBUG: compound_score = {compound_score}")
+                print(f"🔍 DEBUG: is_negative = {is_negative}")
+                print(f"🔍 DEBUG: condición completa = {has_sentiment and is_negative}")
+                
+                if has_sentiment and is_negative:
+                    request_feedback = True
+                    print(f"😔 ACTIVANDO FEEDBACK para user {current_user.id}")
+                else:
+                    print(f"😊 NO activando feedback para user {current_user.id}")
+                    
+                print(f"🎯 RESULTADO FINAL: request_feedback = {request_feedback}")
+                    
+            except Exception as sentiment_error:
+                logger.warning(f"⚠️ Sentiment analysis failed: {sentiment_error}")
+                # Continuar sin sentiment analysis si falla
+        
         # Persistir historial si viene session_id
         if request.session_id:
             # Crear conversación si no existe
@@ -147,7 +188,9 @@ async def chat_conversation(
         else:
             # Si no hay session_id, solo responde normalmente
             response = await service.chat(request)
-
+        
+        
+        response.request_feedback = request_feedback
         print("response:", response)
         return response
     except Exception as e:
@@ -218,6 +261,120 @@ async def delete_chat_history(session_id: str, db: Session = Depends(get_db), cu
     db.commit()
     return {"deleted": 1}
 
+
+
+@router.post("/feedback")
+async def submit_user_feedback(
+    feedback_data: FeedbackRequest,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        logger.info(f"Receiving feedback from user {current_user.id}: {feedback_data.feedback_text[:50]}...")
+        
+        # Analizar sentiment del feedback usando el sentiment service
+        feedback_sentiment = None
+        triggered_analysis_id = None
+        
+        try:
+            # Enviar feedback al sentiment service para análisis
+            feedback_sentiment = await sentiment_client.analyze_text(
+                text=feedback_data.feedback_text,
+                explain_with_llm=True,
+                user_id=current_user.id
+            )
+            
+            # El sentiment service devuelve el ID del análisis guardado
+            triggered_analysis_id = feedback_sentiment.get('id') if feedback_sentiment else None
+            
+            logger.info(f"📊 Feedback sentiment analyzed: {feedback_sentiment.get('sentiment_compound', 'N/A')}")
+        except Exception as sentiment_error:
+            logger.warning(f"⚠️ Sentiment analysis failed for feedback: {sentiment_error}")
+        
+        # Crear y guardar feedback en chat-api database
+        new_feedback = models.Feedback(
+            user_id=current_user.id,
+            feedback_text=feedback_data.feedback_text,
+            rating=feedback_data.rating or 3,
+            triggered_by_analysis_id=triggered_analysis_id,  # ✅ ID del análisis en sentiment service
+            feedback_sentiment_compound=feedback_sentiment.get('sentiment_compound') if feedback_sentiment else None,
+            feedback_sentiment_analysis=feedback_sentiment.get('llm_explanation') if feedback_sentiment else None
+        )
+        
+        db.add(new_feedback)
+        db.commit()
+        db.refresh(new_feedback)
+        
+        logger.info(f"✅ Feedback saved with ID: {new_feedback.id}")
+        
+        return {
+            "status": "success",
+            "message": "Thank you for your feedback! We'll use it to improve our service.",
+            "feedback_id": new_feedback.id,
+            "sentiment_analysis": feedback_sentiment  # Incluir análisis para debugging
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error submitting feedback: {e}")
+        raise HTTPException(status_code=500, detail="Failed to process feedback")
+    
+
+# ✅ AÑADIR endpoint adicional en routes.py:
+
+@router.get("/admin/feedback")
+async def get_feedback_with_analysis(
+    limit: int = 10,
+    offset: int = 0,
+    resolved: Optional[bool] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_active_user)
+):
+    """Get feedback list with sentiment analysis details"""
+    try:
+        query = db.query(models.Feedback)
+        
+        if resolved is not None:
+            query = query.filter(models.Feedback.resolved == resolved)
+            
+        feedback_list = query.order_by(models.Feedback.created_at.desc())\
+                           .offset(offset)\
+                           .limit(limit)\
+                           .all()
+        
+        # Para cada feedback, buscar el análisis en sentiment service
+        enriched_feedback = []
+        for feedback in feedback_list:
+            feedback_data = {
+                "id": feedback.id,
+                "user_id": feedback.user_id,
+                "feedback_text": feedback.feedback_text,
+                "rating": feedback.rating,
+                "category": feedback.category,
+                "sentiment_compound": feedback.feedback_sentiment_compound,
+                "sentiment_explanation": feedback.feedback_sentiment_analysis,
+                "resolved": feedback.resolved,
+                "created_at": feedback.created_at.isoformat() if feedback.created_at else None
+            }
+            
+            # ✅ OPCIONAL: Obtener análisis completo del sentiment service
+            if feedback.triggered_by_analysis_id:
+                try:
+                    # Llamar al sentiment service para obtener análisis completo
+                    analysis_response = await sentiment_client.get_analysis_by_id(feedback.triggered_by_analysis_id)
+                    feedback_data["original_analysis"] = analysis_response
+                except Exception:
+                    feedback_data["original_analysis"] = None
+            
+            enriched_feedback.append(feedback_data)
+        
+        return {
+            "feedback": enriched_feedback,
+            "total": db.query(models.Feedback).count()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching feedback: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch feedback")
 
 # ===== Conversaciones estilo ChatGPT =====
 from pydantic import BaseModel
