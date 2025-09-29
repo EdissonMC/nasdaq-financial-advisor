@@ -48,6 +48,9 @@ class DashboardChartData(BaseModel):
     subjectivity: List[float]
     created_at: List[datetime]
 
+
+SentimentAnalysis = AnalysisResponse
+
 class AdminDashboardData(BaseModel):
     records: List[SentimentAnalysis]
     metrics: DashboardMetrics

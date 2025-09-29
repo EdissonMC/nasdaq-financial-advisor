@@ -103,7 +103,8 @@ export function App() {
             }
 
             // Lógica para usuarios normales
-            const res = await apiLogin(email, password);
+            const { login } = await import('../../services/api')
+            const res = await login(email, password);
             const token = `${res.token_type ?? 'Bearer'} ${res.access_token}`.trim();
             localStorage.setItem('access_token', token);
             localStorage.setItem('user_email', email);
@@ -114,6 +115,7 @@ export function App() {
         } catch (error) {
             console.error("Login failed:", error);
             // Opcional: mostrar un mensaje de error al usuario
+            throw new Error('Credenciales inválidas');
         }
     };
 
@@ -360,14 +362,7 @@ export function App() {
       <LoginModal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
-        onSubmit={async (email, password) => {
-          // Nota: si el backend requiere un formato distinto, ajustar aquí
-          // y guardar el token con el prefijo que corresponda (p. ej., "Bearer ...")
-          const { login } = await import('../../services/api')
-          const res = await login(email, password)
-          const token = `${res.token_type ?? 'Bearer'} ${res.access_token}`.trim()
-          handleConfigSave({ ...apiConfig, authToken: token })
-        }}
+        onSubmit={handleLogin}
       />
       <RegisterModal
         isOpen={isRegisterOpen}

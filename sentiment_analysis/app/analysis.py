@@ -82,9 +82,11 @@ def analyze_text(text: str, explain_with_llm: bool = False):
         result["llm_explanation"] = explanation
 
     return result
-
+from sqlalchemy.orm import Session  # 
+from . import models, schemas  # ✅ IMPORTS RELATIVOS CORRECTOS
+import pandas as pd
 def get_admin_dashboard_data(db: Session):
-    analyses = db.query(models.SentimentAnalysis).all()
+    analyses = db.query(models.Analysis).all()
     
     if not analyses:
         return None

@@ -20,6 +20,8 @@ export function LoginModal({ isOpen, onClose, onSubmit }: Props) {
     try {
       await onSubmit(email.trim(), password)
       onClose()
+      setEmail('')
+      setPassword('')
     } catch (e) {
       setError('Error de autenticación. Verifica tus credenciales.')
     } finally {

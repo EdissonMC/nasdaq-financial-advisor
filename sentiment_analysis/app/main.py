@@ -162,12 +162,12 @@ def get_analysis_by_id(analysis_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/admin/dashboard", response_model=schemas.AdminDashboardData)
-def get_admin_dashboard(db: Session = Depends(database.get_db)):
-    dashboard_data = analysis.get_admin_dashboard_data(db)
-    if dashboard_data is None:
-        raise HTTPException(status_code=404, detail="No analysis records found")
-    return dashboard_data
+#@app.get("/admin/dashboard", response_model=schemas.AdminDashboardData)
+#def get_admin_dashboard(db: Session = Depends(database.get_db)):
+#    dashboard_data = analysis.get_admin_dashboard_data(db)
+#    if dashboard_data is None:
+#        raise HTTPException(status_code=404, detail="No analysis records found")
+#    return dashboard_data
 
 if __name__ == "__main__":
     import uvicorn
