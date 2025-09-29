@@ -19,12 +19,14 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código de la aplicación
-COPY . .
-
 # Crear script de inicialización
 COPY docker-entrypoint.sh .
 RUN dos2unix docker-entrypoint.sh && chmod +x docker-entrypoint.sh
+
+# Copiar código de la aplicación
+COPY . .
+
+
 
 
 # Exponer puerto

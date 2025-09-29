@@ -82,3 +82,33 @@ def analyze_text(text: str, explain_with_llm: bool = False):
         result["llm_explanation"] = explanation
 
     return result
+
+def get_admin_dashboard_data(db: Session):
+    analyses = db.query(models.SentimentAnalysis).all()
+    
+    if not analyses:
+        return None
+
+    df = pd.DataFrame([analysis.__dict__ for analysis in analyses])
+    
+    metrics = schemas.DashboardMetrics(
+        avg_positive=df['sentiment_pos'].mean(),
+        avg_negative=df['sentiment_neg'].mean(),
+        avg_neutral=df['sentiment_neu'].mean(),
+        avg_compound=df['sentiment_compound'].mean()
+    )
+    
+    charts = schemas.DashboardChartData(
+        sentiment_compound=df['sentiment_compound'].tolist(),
+        polarity=df['polarity'].tolist(),
+        subjectivity=df['subjectivity'].tolist(),
+        created_at=df['created_at'].tolist()
+    )
+
+    records = [schemas.SentimentAnalysis.from_orm(analysis) for analysis in analyses]
+    
+    return schemas.AdminDashboardData(
+        records=records,
+        metrics=metrics,
+        charts=charts
+    )
