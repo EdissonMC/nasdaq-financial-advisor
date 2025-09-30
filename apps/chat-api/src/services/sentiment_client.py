@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class SentimentClient:
     def __init__(self):
-        self.base_url = os.getenv("SENTIMENT_API_URL", "http://localhost:8001")
+        self.base_url = os.getenv("SENTIMENT_API_URL", "http://sentiment-api:8001")
         self.timeout = 10.0
     
     async def analyze_text(
@@ -33,6 +33,18 @@ class SentimentClient:
             logger.error(f"Error in sentiment analysis: {e}")
             return None
     
+    async def get_analysis_by_id(self, analysis_id: int) -> Optional[Dict[str, Any]]:
+        """Get specific analysis from sentiment service"""
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(f"{self.base_url}/analyses/{analysis_id}")
+                if response.status_code == 200:
+                    return response.json()
+                return None
+        except Exception as e:
+            logger.error(f"Error fetching analysis {analysis_id}: {e}")
+            return None
+        
     async def health_check(self) -> bool:
         """Check if service is available"""
         try:

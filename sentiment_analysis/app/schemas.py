@@ -32,3 +32,26 @@ class AnalysisResponse(BaseModel):
 
     class Config:
         from_attributes = True  # ✅ Required in Pydantic v2
+
+from typing import List, Optional
+
+
+class DashboardMetrics(BaseModel):
+    avg_positive: float
+    avg_negative: float
+    avg_neutral: float
+    avg_compound: float
+
+class DashboardChartData(BaseModel):
+    sentiment_compound: List[float]
+    polarity: List[float]
+    subjectivity: List[float]
+    created_at: List[datetime]
+
+
+SentimentAnalysis = AnalysisResponse
+
+class AdminDashboardData(BaseModel):
+    records: List[SentimentAnalysis]
+    metrics: DashboardMetrics
+    charts: DashboardChartData

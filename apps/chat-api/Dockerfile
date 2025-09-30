@@ -12,18 +12,22 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     curl \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements e instalar dependencias Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Crear script de inicialización
+COPY docker-entrypoint.sh .
+RUN dos2unix docker-entrypoint.sh && chmod +x docker-entrypoint.sh
+
 # Copiar código de la aplicación
 COPY . .
 
-# Crear script de inicialización
-COPY docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh
+
+
 
 # Exponer puerto
 EXPOSE 8000

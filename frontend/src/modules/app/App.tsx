@@ -9,7 +9,7 @@ import type { ApiConfig } from '../config/types'
 import { loadConversations, saveConversations } from '../conversations/storage'
 import { loadConfig, saveConfig } from '../config/storage'
 import { askQuestion, setApiConfig, getHistory, deleteHistory, listConversations, createConversation as createConversationApi, renameConversationApi } from '../../services/api'
-
+import { AdminDashboard } from '../admin/AdminDashboard';
 export function App() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeId, setActiveId] = useState<string>('')
@@ -18,12 +18,24 @@ export function App() {
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isRegisterOpen, setIsRegisterOpen] = useState(false)
-
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminCheckComplete, setAdminCheckComplete] = useState(false);
   useEffect(() => {
     // Cargar configuración del API
     const config = loadConfig()
     setApiConfigState(config)
     setApiConfig(config)
+
+    const checkAdminStatus = () => {
+            const userEmail = localStorage.getItem('user_email');
+            if (userEmail === 'admin@gmail.com' && localStorage.getItem('access_token')) {
+                setIsAdmin(true);
+            } else {
+                setIsAdmin(false);
+            }
+            setAdminCheckComplete(true);
+        };
+    checkAdminStatus();
 
     // Intentar cargar lista desde backend si hay token
     const boot = async () => {
@@ -76,6 +88,71 @@ export function App() {
     loadHistoryFromApi(activeId)
   }, [activeId])
 
+  // ✅ 4. CREAR UNA FUNCIÓN DE LOGIN CENTRALIZADA
+    const handleLogin = async (email: string, password: string) => {
+        try {
+            // Lógica para el admin (hardcodeada)
+            if (email === 'admin@gmail.com' && password === 'Admin1234') {
+                const fakeToken = 'admin-fake-token';
+                localStorage.setItem('access_token', fakeToken);
+                localStorage.setItem('user_email', email);
+                handleConfigSave({ ...apiConfig, authToken: fakeToken });
+                setIsAdmin(true);
+                setIsLoginOpen(false); // Cierra el modal
+                
+                return;
+            }
+
+            // Lógica para usuarios normales
+            const { login } = await import('../../services/api')
+            const res = await login(email, password);
+            const token = `${res.token_type ?? 'Bearer'} ${res.access_token}`.trim();
+            localStorage.setItem('access_token', token);
+            localStorage.setItem('user_email', email);
+            handleConfigSave({ ...apiConfig, authToken: token });
+            await loadUserConversations();
+            setIsAdmin(false);
+            setIsLoginOpen(false); // Cierra el modal
+
+        } catch (error) {
+            console.error("Login failed:", error);
+            // Opcional: mostrar un mensaje de error al usuario
+            throw new Error('Credenciales inválidas');
+        }
+    };
+
+  // ✅ FUNCIÓN PARA CARGAR CONVERSACIONES DEL USUARIO ACTUAL
+const loadUserConversations = async () => {
+    try {
+        console.log('🔍 Loading conversations for current user...');
+        
+        // ✅ LIMPIAR CONVERSACIONES LOCALES PRIMERO
+        setConversations([]);
+        setActiveId('');
+        
+        const res = await listConversations();
+        console.log('✅ Conversations loaded:', res);
+        
+        if (res.conversations.length) {
+            const mapped: Conversation[] = res.conversations.map(c => ({
+                id: c.session_id,
+                title: c.title,
+                messages: [],
+                createdAt: c.created_at ? Date.parse(c.created_at) : Date.now(),
+                updatedAt: c.updated_at ? Date.parse(c.updated_at) : Date.now()
+            }));
+            
+            setConversations(mapped);
+            setActiveId(mapped[0].id);
+        } else {
+            console.log('ℹ️ No conversations found, creating new one...');
+            createConversation();
+        }
+    } catch (error) {
+        console.error('❌ Error loading conversations:', error);
+        createConversation();
+    }
+};
   const createConversation = () => {
     const conv: Conversation = {
       id: crypto.randomUUID(),
@@ -113,8 +190,13 @@ export function App() {
   }
 
   const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user_email');
     const next: ApiConfig = { ...apiConfig, authToken: undefined }
-    handleConfigSave(next)
+    handleConfigSave(next);
+    setIsAdmin(false);
+    setConversations([]);
+    setActiveId('')
   }
 
   const handleSend = async (text: string) => {
@@ -134,13 +216,16 @@ export function App() {
       const allowedRoles = ['assistant', 'user', 'system'] as const;
     const role = allowedRoles.includes(data.message?.role as any) ? data.message?.role as 'assistant' | 'user' | 'system' : 'assistant';
 
-      const bot: ChatMessage = {
+      const bot: ChatMessage & {metadata?: any} = {
         id: crypto.randomUUID(),
         role,
         content: data.message?.content ?? 'Sin respuesta disponible.',
-        citations: data.citations
+        citations: data.citations,
+        metadata: {
+          request_feedback: data.request_feedback  
         }
-      
+      }
+      console.log('🤖 Assistant message with metadata:', bot);
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, bot], updatedAt: Date.now() } : c))
       if (activeConv.title === 'Nueva conversación') {
         const inferred = text.slice(0, 40).trim() || 'Conversación'
@@ -164,7 +249,40 @@ export function App() {
       // Ignorar si no está disponible; seguimos con localStorage
     }
   }
+  // ✅ 5. RENDERIZADO CONDICIONAL: SI ES ADMIN, MUESTRA EL DASHBOARD
+    if (isAdmin && adminCheckComplete) {
+        return (
+            <div style={{ minHeight: '100vh', background: 'var(--background)' }}>
+                {/* Header del Admin */}
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0,
+                    background: 'var(--panel)', borderBottom: '1px solid var(--border)',
+                    padding: '12px 20px', display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', zIndex: 1000, height: '60px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ background: '#7c3aed', color: 'white', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '600' }}>
+                            👤 ADMIN
+                        </div>
+                        <span style={{ color: 'var(--text)', fontSize: '14px' }}>
+                            Welcome, admin
+                        </span>
+                    </div>
+                    <button onClick={handleLogout} style={{
+                        background: '#dc2626', color: 'white', border: 'none',
+                        borderRadius: '6px', padding: '8px 12px', fontSize: '12px', cursor: 'pointer'
+                    }}>
+                        🚪 Logout
+                    </button>
+                </div>
 
+                {/* Contenido del Dashboard */}
+                <div style={{ paddingTop: '60px' }}>
+                    <AdminDashboard />
+                </div>
+            </div>
+        );
+    }
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header a ancho completo */}
@@ -279,14 +397,7 @@ export function App() {
       <LoginModal
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
-        onSubmit={async (email, password) => {
-          // Nota: si el backend requiere un formato distinto, ajustar aquí
-          // y guardar el token con el prefijo que corresponda (p. ej., "Bearer ...")
-          const { login } = await import('../../services/api')
-          const res = await login(email, password)
-          const token = `${res.token_type ?? 'Bearer'} ${res.access_token}`.trim()
-          handleConfigSave({ ...apiConfig, authToken: token })
-        }}
+        onSubmit={handleLogin}
       />
       <RegisterModal
         isOpen={isRegisterOpen}
