@@ -99,6 +99,7 @@ export function App() {
                 handleConfigSave({ ...apiConfig, authToken: fakeToken });
                 setIsAdmin(true);
                 setIsLoginOpen(false); // Cierra el modal
+                
                 return;
             }
 
@@ -109,6 +110,7 @@ export function App() {
             localStorage.setItem('access_token', token);
             localStorage.setItem('user_email', email);
             handleConfigSave({ ...apiConfig, authToken: token });
+            await loadUserConversations();
             setIsAdmin(false);
             setIsLoginOpen(false); // Cierra el modal
 
@@ -119,7 +121,38 @@ export function App() {
         }
     };
 
-
+  // ✅ FUNCIÓN PARA CARGAR CONVERSACIONES DEL USUARIO ACTUAL
+const loadUserConversations = async () => {
+    try {
+        console.log('🔍 Loading conversations for current user...');
+        
+        // ✅ LIMPIAR CONVERSACIONES LOCALES PRIMERO
+        setConversations([]);
+        setActiveId('');
+        
+        const res = await listConversations();
+        console.log('✅ Conversations loaded:', res);
+        
+        if (res.conversations.length) {
+            const mapped: Conversation[] = res.conversations.map(c => ({
+                id: c.session_id,
+                title: c.title,
+                messages: [],
+                createdAt: c.created_at ? Date.parse(c.created_at) : Date.now(),
+                updatedAt: c.updated_at ? Date.parse(c.updated_at) : Date.now()
+            }));
+            
+            setConversations(mapped);
+            setActiveId(mapped[0].id);
+        } else {
+            console.log('ℹ️ No conversations found, creating new one...');
+            createConversation();
+        }
+    } catch (error) {
+        console.error('❌ Error loading conversations:', error);
+        createConversation();
+    }
+};
   const createConversation = () => {
     const conv: Conversation = {
       id: crypto.randomUUID(),
@@ -162,6 +195,8 @@ export function App() {
     const next: ApiConfig = { ...apiConfig, authToken: undefined }
     handleConfigSave(next);
     setIsAdmin(false);
+    setConversations([]);
+    setActiveId('')
   }
 
   const handleSend = async (text: string) => {

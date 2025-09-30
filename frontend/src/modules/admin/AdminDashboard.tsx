@@ -25,7 +25,8 @@ export function AdminDashboard() {
     const fetchMetrics = async () => {
       try {
         // ✅ USAR EL ENDPOINT CORRECTO DEL SENTIMENT-API
-        const response = await fetch('http://sentiment-api:8001/admin/dashboard')
+        const apiUrl = import.meta.env.VITE_SENTIMENT_API_URL || 'http://localhost:8001'
+        const response = await fetch(`${apiUrl}/admin/dashboard`)
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
