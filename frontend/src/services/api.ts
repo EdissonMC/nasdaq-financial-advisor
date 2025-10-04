@@ -209,13 +209,13 @@ export async function login(email: string, password: string): Promise<{ access_t
   return res.json()
 }
 
-export async function register(email: string, password: string): Promise<{ message: string }> {
+export async function register(name: string, email: string, password: string): Promise<{ message: string }> {
   const cfg = getApiConfig()
   const baseUrl = getCleanBaseUrl()
   const res = await fetch(`${baseUrl}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ name, email, password })
   })
   if (!res.ok) throw new Error('Error en el registro')
   return res.json()

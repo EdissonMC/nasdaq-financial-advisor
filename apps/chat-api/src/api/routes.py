@@ -42,7 +42,8 @@ async def health_check() -> Dict[str, str]:
     return {
         "status": "healthy", 
         "service": "chat-api",
-        "mode": settings.llm_mode
+        "mode": settings.llm_mode,
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 
