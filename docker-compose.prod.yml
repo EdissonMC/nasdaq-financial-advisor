@@ -1,0 +1,27 @@
+# docker-compose.prod.yml
+version: '3.9'
+
+services:
+  # Frontend - Build optimizado para producción
+  frontend:
+    build:
+      context: ./frontend
+      target: runner  # Multi-stage build (Nginx)
+    image: chatapi-frontend:prod
+    container_name: frontend-prod-build
+    
+  # Backend - Build optimizado para producción  
+  chat-api:
+    build: 
+      context: ./apps/chat-api
+      target: prod
+    image: chatapi-backend:prod
+    container_name: backend-prod-build
+    
+  # Sentiment API - Build optimizado para producción
+  sentiment-api:
+    build: 
+      context: ./sentiment_analysis
+      target: prod
+    image: chatapi-sentiment:prod
+    container_name: sentiment-prod-build

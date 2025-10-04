@@ -90,3 +90,11 @@ class Settings(BaseSettings):
 
 # Global configuration instance
 settings = Settings()
+
+
+
+
+if __name__ == "__main__":
+    from pprint import pprint
+
+    pprint(settings.model_dump())
