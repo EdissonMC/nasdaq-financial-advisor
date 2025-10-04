@@ -44,6 +44,7 @@ class ChatResponse(BaseModel):
     message: ChatMessage = Field(..., description="Response message from the assistant")
     model_id: str = Field(..., description="Model used for generation")
     usage: Dict[str, Any] = Field(default_factory=dict, description="Usage information")
+    request_feedback: Optional[bool] = Field(False, description="Whether to request user feedback")  
     
     
     
