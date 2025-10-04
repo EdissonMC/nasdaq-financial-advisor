@@ -48,7 +48,8 @@ async def health_check() -> Dict[str, str]:
     return {
         "status": "healthy", 
         "service": "chat-api",
-        "mode": settings.llm_mode
+        "mode": settings.llm_mode,
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 
@@ -63,7 +64,9 @@ async def generate_text(request: LLMRequest, db: Session = Depends(get_db), curr
         service = get_llm_service()
         print(f"[DEBUG] LLM service type: {type(service)}")
         response = await service.generate_text(request)
+
         #response = await service.chat(request)
+
         print("response:", response)
         # Persistir historial si viene session_id
         if request.session_id:

@@ -72,7 +72,7 @@ export async function askQuestion(
   model_id?: string,
   max_tokens?: number,
   temperature?: number
-): Promise<ChatResponse> {
+): Promise<AskResponse> {
 
 
 //   {
@@ -216,7 +216,7 @@ export async function login(email: string, password: string): Promise<{ access_t
   return res.json()
 }
 
-export async function register(name: string,email: string, password: string): Promise<{ message: string }> {
+export async function register(name: string, email: string, password: string): Promise<{ message: string }> {
   const cfg = getApiConfig()
   const baseUrl = getCleanBaseUrl()
   const payload = { name, email, password };

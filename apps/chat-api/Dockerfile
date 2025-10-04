@@ -1,21 +1,15 @@
-FROM python:3.9-slim
 
-# Variables de entorno
+# --- Development stage ---
+FROM python:3.9-slim AS dev
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV ENVIRONMENT=docker
-
-# Directorio de trabajo
+ENV ENVIRONMENT=development
 WORKDIR /app
-
-# Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     curl \
     dos2unix \
     && rm -rf /var/lib/apt/lists/*
-
-# Copiar requirements e instalar dependencias Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -26,11 +20,23 @@ RUN dos2unix docker-entrypoint.sh && chmod +x docker-entrypoint.sh
 # Copiar código de la aplicación
 COPY . .
 
-
-
-
-# Exponer puerto
 EXPOSE 8000
+CMD ["./docker-entrypoint.sh"]
 
-# Comando de inicio
+# --- Production stage ---
+FROM python:3.9-slim AS prod
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV ENVIRONMENT=production
+WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+COPY docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh
+EXPOSE 8000
 CMD ["./docker-entrypoint.sh"]
