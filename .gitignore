@@ -8,7 +8,8 @@ __pycache__/
 venv/
 venv2/
 .env
-.env.*
+# Allow .env.production for deployment reference
+!.env.production
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
