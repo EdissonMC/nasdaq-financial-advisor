@@ -100,6 +100,7 @@ services:
     container_name: chatapi-frontend
     environment:
       - DEV=true
+      - VITE_SENTIMENT_API_URL=${VITE_SENTIMENT_API_URL:-http://localhost:8001}
     volumes:
       - ./frontend:/app
       - /app/node_modules

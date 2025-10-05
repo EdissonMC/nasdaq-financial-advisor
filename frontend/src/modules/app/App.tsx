@@ -228,10 +228,11 @@ const loadUserConversations = async () => {
       }
       console.log('🤖 Assistant message with metadata:', bot);
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, bot], updatedAt: Date.now() } : c))
-      if (activeConv.title === 'Nueva conversación') {
-        const inferred = text.slice(0, 40).trim() || 'Conversación'
-        renameConversation(cid, inferred)
-      }
+      // Auto-rename disabled until backend endpoint is implemented
+      // if (activeConv.title === 'Nueva conversación') {
+      //   const inferred = text.slice(0, 40).trim() || 'Conversación'
+      //   renameConversation(cid, inferred)
+      // }
     } catch {
   const err: ChatMessage = { id: uuidv4(), role: 'assistant', content: 'Error al obtener respuesta. Intenta nuevamente.' }
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, err], updatedAt: Date.now() } : c))
@@ -406,11 +407,8 @@ const loadUserConversations = async () => {
         onSubmit={async (name, email, password) => {
           const { register } = await import('../../services/api')
           await register(name, email, password)
-          // Después de registrarse, opcionalmente iniciar sesión automáticamente
-          const { login } = await import('../../services/api')
-          const res = await login(email, password)
-          const token = `${res.token_type ?? 'Bearer'} ${res.access_token}`.trim()
-          handleConfigSave({ ...apiConfig, authToken: token })
+          // Después de registrarse, iniciar sesión automáticamente
+          await handleLogin(email, password)
         }}
       />
     </div>
