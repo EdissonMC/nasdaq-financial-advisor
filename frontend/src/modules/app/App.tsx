@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { v4 as uuidv4 } from 'uuid';
 import { ChatWindow, type ChatMessage } from '../chat/ChatWindow'
 import { Sidebar } from '../conversations/Sidebar'
 import { ConfigModal } from '../config/ConfigModal'
@@ -63,7 +64,7 @@ export function App() {
         setActiveId(stored[0].id)
       } else {
         const first: Conversation = {
-          id: crypto.randomUUID(),
+          id: uuidv4(),
           title: 'Nueva conversación',
           messages: [{ id: 'welcome', role: 'assistant', content: 'Hola, ¿en qué empresa NASDAQ te gustaría enfocarte?' }],
           createdAt: Date.now(),
@@ -155,9 +156,9 @@ const loadUserConversations = async () => {
 };
   const createConversation = () => {
     const conv: Conversation = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       title: 'Nueva conversación',
-      messages: [{ id: crypto.randomUUID(), role: 'assistant', content: 'Nueva sesión lista. Pregúntame sobre una empresa.' }],
+      messages: [{ id: uuidv4(), role: 'assistant', content: 'Nueva sesión lista. Pregúntame sobre una empresa.' }],
       createdAt: Date.now(),
       updatedAt: Date.now()
     }
@@ -201,7 +202,7 @@ const loadUserConversations = async () => {
 
   const handleSend = async (text: string) => {
     if (!activeConv) return
-    const newUser: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: text }
+  const newUser: ChatMessage = { id: uuidv4(), role: 'user', content: text }
     const cid = activeConv.id
     setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, newUser], updatedAt: Date.now() } : c))
     setLoading(true)
@@ -209,15 +210,15 @@ const loadUserConversations = async () => {
       const data = await askQuestion(text, cid)
       console.log('[handleSend] Respuesta del backend : >', data)
 
-      // const bot: ChatMessage = { 
-      //   id: crypto.randomUUID(), 
-      //   role: 'assistant', 
-      //   content: data.answer ?? 'Sin respuesta disponible.', citations: data.citations }
+  // const bot: ChatMessage = { 
+  //   id: uuidv4(), 
+  //   role: 'assistant', 
+  //   content: data.answer ?? 'Sin respuesta disponible.', citations: data.citations }
       const allowedRoles = ['assistant', 'user', 'system'] as const;
     const role = allowedRoles.includes(data.message?.role as any) ? data.message?.role as 'assistant' | 'user' | 'system' : 'assistant';
 
       const bot: ChatMessage & {metadata?: any} = {
-        id: crypto.randomUUID(),
+  id: uuidv4(),
         role,
         content: data.message?.content ?? 'Sin respuesta disponible.',
         citations: data.citations,
@@ -232,7 +233,7 @@ const loadUserConversations = async () => {
         renameConversation(cid, inferred)
       }
     } catch {
-      const err: ChatMessage = { id: crypto.randomUUID(), role: 'assistant', content: 'Error al obtener respuesta. Intenta nuevamente.' }
+  const err: ChatMessage = { id: uuidv4(), role: 'assistant', content: 'Error al obtener respuesta. Intenta nuevamente.' }
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, err], updatedAt: Date.now() } : c))
     } finally {
       setLoading(false)
