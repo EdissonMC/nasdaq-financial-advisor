@@ -1,90 +1,134 @@
-# GUÍA PROYECTO CONSOLIDADA - FINANCIAL AI CHATBOT
 
-## INFORMACIÓN DEL PROYECTO
+# FINANCIAL AI CHATBOT - PROJECT GUIDE
 
-**Duración**: 5 semanas  
-**Equipo**: 7 personas  
-**Objetivo**: Construir un chatbot financiero profesional utilizando RAG con documentos NASDAQ  
-**Enfoque**: Desarrollo local primero → migración a AWS para producción  
-**Balance**: Funcionalidad empresarial con scope manejable  
+## PROJECT OVERVIEW
 
----
-
-## ARQUITECTURA SELECCIONADA: ECS CONTAINER-NATIVE CON MICROSERVICIOS LIGEROS
-
-### Por qué esta arquitectura
-- **Profesional pero pragmática**: Tecnologías usadas en 80% de empresas tech
-- **Skills transferibles**: Docker, ECS, microservicios, APIs modernas
-- **Escalable progresivamente**: MVP rápido → producción robusta
-- **Balance aprendizaje/tiempo**: Complejidad apropiada para 5 semanas
-
-### Componentes Principales
-1. **Document Store (S3/FS):** almacena PDFs originales y textos procesados.
-2. **Doc Processor (Servicio batch):** extrae, limpia y parte textos (chunking) → genera **embeddings** → indexa en **Vector DB**.
-3. **Vector DB (Pinecone / OpenSearch / Qdrant):** almacena vectores + metadatos para **búsqueda semántica**.
-4. **Search Service (API interna):** resuelve consultas semánticas: *query → top‑k chunks → (re‑rank opcional)*.
-5. **LLM Service (API interna):** abstrae el proveedor del LLM (Claude/OpenAI/Bedrock). Recibe *prompt estructurado* + *contexto*, devuelve *respuesta stream o completa*.
-6. **Chat API (FastAPI):** expone endpoints públicos, orquesta el flujo **RAG** (User Query → Search → Prompt → LLM), maneja **historial**, **sesiones** y **autorización**.
-7. **Frontend (Streamlit/React/Chainlit):** interfaz de conversación tipo ChatGPT.
-8. **PostgreSQL (Control Plane):** guarda **usuarios/sesiones**, **historial de chat**, **catálogo de documentos**, **configuraciones** (por ejemplo: versión del índice, flags de features). *Hace el rol que algunos usarían con DynamoDB, pero aquí preferimos SQL por simplicidad y relaciones.*
-9. **Redis (Cache opcional):** cachea consultas frecuentes y resultados de RAG (TTL corto).
-10. **Observabilidad (Logs/Métricas/Tracing):** CloudWatch/Prometheus + dashboards y alertas.
+**Duration**: 5 weeks  
+**Team**: 7 members  
+**Goal**: Build a professional financial chatbot using Retrieval-Augmented Generation (RAG) with NASDAQ documents  
+**Deployment**: Currently running on an AWS EC2 instance for production  
+**Scope**: Enterprise-grade functionality with manageable complexity
 
 ---
 
-## DIAGRAMA DE ARQUITECTURA
+## CURRENT ARCHITECTURE: EC2 INSTANCE WITH MODULAR MICROSERVICES
 
-```
-                    ┌─── Frontend (Streamlit) ────┐
-                    │     http://localhost:8501   │
-                    └─────────────┬───────────────┘
-                                  │ HTTP
-                                  ▼
-          ┌──────────────── Chat API (FastAPI) ──────────────┐
-          │               http://localhost:8000              │
-          │  • Orquestación RAG                             │
-          │  • Gestión sesiones                             │
-          │  • Endpoints públicos                           │
-          └─────────────┬─────────────┬─────────────────────┘
-                        │             │
-        ┌───────────────▼─────────────▼─────────────────────┐
-        │                                                   │
-   ┌────▼────┐                                        ┌────▼────┐
-   │ Search  │                                        │   LLM   │
-   │Service  │                                        │Service  │
-   │:8001    │                                        │:8002    │
-   └────┬────┘                                        └────┬────┘
-        │                                                  │
-        ▼                                                  ▼
-┌──────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Pinecone   │    │PostgreSQL   │    │    Redis    │    │AWS Bedrock/ │
-│  (Vectores)  │    │(Metadatos)  │    │  (Cache)    │    │   OpenAI    │
-└──────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-        ▲                                                         
-        │                                                         
-┌───────┴────────┐                                               
-│ Doc Processor  │                                               
-│  (Background)  │                                               
-│   S3 → Text    │                                               
-│ → Embeddings   │                                               
-└────────────────┘                                               
-```
+### Why this architecture?
+- **Professional and pragmatic**: Technologies adopted by leading tech companies
+- **Transferable skills**: Docker, FastAPI, microservices, modern APIs
+- **Scalable**: MVP-first, then robust production
+
+### Main Components
+1. **Document Store (S3/Filesystem):** Stores original PDFs and processed text.
+2. **Doc Processor (Batch Service):** Extracts, cleans, and chunks text → generates **embeddings** → indexes in **Vector DB**.
+3. **Vector DB (Pinecone):** Stores vector embeddings and metadata for semantic search.
+4. **Search Service (FastAPI):** Handles semantic queries: *query → top‑k chunks*.
+5. **LLM Service (FastAPI):** Abstracts the LLM provider (AWS Bedrock). Receives *formatted prompt* + *context*, returns *streamed or complete response*.
+6. **Chat API (FastAPI):** Public endpoints, orchestrates the RAG flow (User Query → Search → Prompt Formatting → LLM), manages **history**, **sessions**, and **authorization**.
+7. **Frontend (React):** ChatGPT-style conversational interface.
+8. **PostgreSQL:** Stores **users/sessions**, **chat history**, **document catalog**, **configurations** (e.g., index version, feature flags).
+9. **Sentiment Analysis Service (FastAPI):** Provides sentiment metrics and admin dashboard endpoints.
+10. **Observability (CloudWatch/Prometheus):** Logging, metrics, dashboards, and alerts.
 
 ---
 
 
-###  Flujo de Datos (alto nivel)
-```
-[PDFs en S3] --(Doc Processor)--> [Texto limpio + Chunks] --(Embeddings)--> [Vector DB]
-                                 (metadatos → PostgreSQL catálogo)
+## ARCHITECTURE DIAGRAM
 
-Usuario → [Frontend] → [Chat API] → [Search Service] → [Vector DB] (top‑k + metadatos)
-                                         ↓
-                               [LLM Service] (Prompt Template + Contexto)
-                                         ↓
-                                   Respuesta al usuario (stream)
-                                  + guarda historial (PostgreSQL)
 ```
+        ┌─── Frontend (React) ────┐
+        │   http://<EC2-IP>:8501 │
+        └───────┬───────┬────────┘
+                │       │
+                │       │
+                │       │
+                │   ┌───────────────┐
+                │   │ Sentiment     │
+                │   │ Analysis      │
+                │   │ Service       │
+                │   │ http://<EC2-IP>:8001 │
+                │   └───────────────┘
+                │
+                ▼
+    ┌───────────── Chat API (FastAPI) ─────────────┐
+    │           http://<EC2-IP>:8000              │
+    │  • RAG Orchestration                        │
+    │  • Session Management                       │
+    │  • Public Endpoints                         │
+    └─────────────┬─────────────┬─────────────────┘
+          │             │
+  ┌───────▼───────┬────▼────────────┐
+  │               │                │
+┌────▼─────┐   ┌─────────────┐   ┌─────────────┐
+│ Search   │   │PostgreSQL   │   │ AWS Bedrock │
+│ Service  │   │(Metadata)   │   │ (LLM Model) │
+│ :8001    │   │             │   │ (cloud API) │
+└────┬─────┘   └─────────────┘   └─────────────┘
+  │
+  ▼
+┌─────────────┐
+│ Pinecone    │
+│ (Vectors)   │
+└─────────────┘
+  ▲
+  │
+┌─────┴─────────┐
+│ Doc Processor │
+│ (Background)  │
+│ S3 → Text     │
+│ → Embeddings  │
+└───────────────┘
+```
+
+---
+
+### Key clarifications:
+- The Chat API communicates directly with AWS Bedrock (LLM) via cloud API, not through a local LLM service.
+- The Sentiment Analysis Service is accessed directly from the Frontend for metrics and dashboard features.
+
+---
+
+###  High-Level Data Flow
+```
+[PDFs in S3] --(Doc Processor)--> [Clean Text + Chunks] --(Embeddings)--> [Pinecone Vector DB]
+             (metadata → PostgreSQL catalog)
+
+User → [Frontend] → [Chat API] → [Search Service] → [Pinecone] (top‑k + metadata)
+                 ↓
+           [LLM Service] (Prompt Formatting + Context)
+                 ↓
+               Response to user (streamed)
+              + saves history (PostgreSQL)
+```
+
+---
+
+### Prompt Flow and Orchestration
+
+1. **User submits a question** via the frontend.
+2. **Chat API** receives the query and sends it to the **Search Service**.
+3. **Search Service** queries **Pinecone** for the most relevant document chunks (top‑k results).
+4. The results are used as **context** for prompt formatting.
+5. **Chat API** formats the prompt and sends it to the **LLM Service** (using AWS Bedrock).
+6. **LLM Service** generates a response using the context and returns it to the Chat API.
+7. **Chat API** streams the response back to the user and saves the conversation history in **PostgreSQL**.
+8. **Sentiment Analysis Service** can be called to analyze user messages and provide metrics for the admin dashboard.
+
+---
+
+### Technologies in Use
+- **AWS EC2**: Hosts all services for production.
+- **AWS Bedrock**: Large Language Model provider for generation and embeddings.
+- **Pinecone**: Vector database for semantic search.
+- **PostgreSQL**: Relational database for metadata, users, and chat history.
+- **FastAPI**: Backend framework for all microservices (Chat API, Search, LLM, Sentiment Analysis).
+- **React**: Frontend for user interaction and admin dashboard.
+
+---
+
+### Notes
+- All references to anyoneai have been removed.
+- The system is designed for clarity, scalability, and professional maintainability.
 
 ###  Modos de actualización de la Base de Conocimiento
 - **Backfill inicial (one‑shot):** procesa todo el dataset y crea el índice.
@@ -110,7 +154,7 @@ Usuario → [Frontend] → [Chat API] → [Search Service] → [Vector DB] (top�
   - `llm-service` (interno)  
   - `doc-processor` (batch/worker)
 - **Por qué así:** facilita escalar *sólo* lo que necesita capacidad; mantiene límites claros sin sobre‑fragmentar.  
-- **Producción:** desplegar cada servicio como **tarea** de ECS Fargate; dependencias manejadas por secretos/variables; autoscaling por CPU/latencia.
+-- **Producción:** desplegar cada servicio como contenedores en una instancia EC2 (docker-compose or container runtime) o en una plataforma gestionada; dependencias manejadas por secretos/variables.
 
 ###  Elección de Vector DB
 - **Pinecone (SaaS):** rápido, simple, pay‑as‑you‑go. Excelente para empezar.  
@@ -178,98 +222,97 @@ Usuario → [Frontend] → [Chat API] → [Search Service] → [Vector DB] (top�
 4. **Database schema** - PostgreSQL inicial + migraciones
 
 #### Día 3-5: Core Infrastructure
-5. **Local Docker services** - PostgreSQL, Redis, basic containers
-6. **Service skeletons** - FastAPI apps básicas con health checks
+
+5. **Local Docker services** - PostgreSQL, basic containers
+6. **Service skeletons** - FastAPI apps with health checks
 7. **Database models** - SQLAlchemy models + Alembic migrations
-8. **Inter-service communication** - HTTP client setup entre servicios
+8. **Inter-service communication** - HTTP client setup between services
 
-**Entregables Semana 1**:
-- ✅ Docker Compose funcionando en todas las máquinas
-- ✅ Servicios básicos respondiendo (health checks)
-- ✅ Base de datos con schema inicial
-- ✅ Comunicación entre contenedores establecida
+**Week 1 Deliverables**:
+- ✅ Docker Compose working on all machines
+- ✅ Basic services responding (health checks)
+- ✅ Database with initial schema
+- ✅ Communication between containers established
 
-### **SEMANA 2: Document Processing & Embeddings Pipeline**
-**Objetivo**: Pipeline de conocimiento completamente funcional
+### **WEEK 2: Document Processing & Embeddings Pipeline**
+**Goal**: Fully functional knowledge pipeline
 
-#### Día 6-8: Document Ingestion
-9. **PDF processing** - Extracción de texto, metadatos, limpieza
-10. **Chunking strategy** - Segmentación con overlap, preservar contexto
-11. **S3 integration** - Upload/download documentos, organización
-12. **Batch processing** - Scripts para procesar datasets completos
+#### Days 6-8: Document Ingestion
+9. **PDF processing** - Text extraction, metadata, cleaning
+10. **Chunking strategy** - Segmentation with overlap, preserve context
+11. **S3 integration** - Upload/download documents, organization
+12. **Batch processing** - Scripts to process complete datasets
 
-#### Día 9-10: Embeddings & Indexing
-13. **LLM Service /embed** - Integración Bedrock/OpenAI embeddings
+#### Days 9-10: Embeddings & Indexing
+13. **Bedrock Embeddings** - Integration for document embeddings
 14. **Vector DB setup** - Pinecone index + batch upsert
-15. **Search Service /search** - Búsqueda semántica básica
-16. **Doc Processor integration** - Pipeline completo: PDF → vectores
+15. **Search Service /search** - Basic semantic search
+16. **Doc Processor integration** - Complete pipeline: PDF → vectors
 
-**Entregables Semana 2**:
-- ✅ Documentos procesados y vectorizados en Pinecone
-- ✅ Search Service devolviendo resultados relevantes
-- ✅ Pipeline de embeddings automatizado
+**Week 2 Deliverables**:
+- ✅ Documents processed and vectorized in Pinecone
+- ✅ Search Service returning relevant results
+- ✅ Automated embeddings pipeline
 
-### **SEMANA 3: RAG Implementation & Chat Logic**
-**Objetivo**: Sistema RAG end-to-end funcionando
+### **WEEK 3: RAG Implementation & Chat Logic**
+**Goal**: End-to-end RAG system working
 
-#### Día 11-13: RAG Orchestration
-17. **Chat API core logic** - Orquestación: query → search → prompt → LLM
-18. **Prompt engineering** - Templates para respuestas financieras
-19. **LLM Service /generate** - Integración con streaming
-20. **Citations system** - Metadatos de fuentes en respuestas
+#### Days 11-13: RAG Orchestration
+17. **Chat API core logic** - Orchestration: query → search → prompt → LLM
+18. **Prompt engineering** - Templates for financial answers
+19. **Bedrock /generate** - Integration with streaming
+20. **Citations system** - Source metadata in responses
 
-#### Día 14-15: Session Management
-21. **User sessions** - Gestión de contexto conversacional
-22. **Chat history** - Persistencia en PostgreSQL
-23. **Context window** - Manejo de límites de tokens
-24. **Basic frontend** - Streamlit app para testing
+#### Days 14-15: Session Management
+21. **User sessions** - Conversational context management
+22. **Chat history** - Persistence in PostgreSQL
+23. **Context window** - Token limit management
+24. **Basic frontend** - React app for testing
 
-**Entregables Semana 3**:
-- ✅ Chatbot RAG completamente funcional
-- ✅ Respuestas con citas y fuentes
-- ✅ Interfaz básica para demostración
-- ✅ Historial conversacional persistente
+**Week 3 Deliverables**:
+- ✅ Fully functional RAG chatbot
+- ✅ Responses with citations and sources
+- ✅ Basic interface for demonstration
+- ✅ Persistent conversational history
 
-### **SEMANA 4: Frontend Enhancement & Performance**
-**Objetivo**: UI profesional + optimizaciones + testing
+### **WEEK 4: Frontend Enhancement & Performance**
+**Goal**: Professional UI + optimizations + testing
 
-#### Día 16-18: Frontend Development
-25. **Streamlit optimization** - UI pulida, components reutilizables
+#### Days 16-18: Frontend Development
+25. **React optimization** - Polished UI, reusable components
 26. **Chat interface** - Message bubbles, typing indicators, citations display
-27. **Document browser** - Vista de fuentes disponibles
-28. **Error handling** - Estados de loading, manejo de errores
+27. **Document browser** - View of available sources
+28. **Error handling** - Loading states, error management
 
-#### Día 19-20: Performance & Quality
-29. **Caching layer** - Redis para queries frecuentes
-30. **Response optimization** - Streaming, chunked responses
-31. **Testing suite** - Unit tests críticos + integration tests
-32. **Performance tuning** - Optimización latencia, memory usage
+#### Days 19-20: Performance & Quality
+29. **Response optimization** - Streaming, chunked responses
+30. **Testing suite** - Critical unit tests + integration tests
+31. **Performance tuning** - Latency and memory usage optimization
 
-**Entregables Semana 4**:
-- ✅ Frontend completo y profesional
-- ✅ Performance < 3 segundos por query
-- ✅ Testing automatizado
-- ✅ Sistema optimizado y estable
+**Week 4 Deliverables**:
+- ✅ Complete and professional frontend
+- ✅ Performance < 3 seconds per query
+- ✅ Automated testing
+- ✅ Optimized and stable system
 
-### **SEMANA 5: AWS Production Deployment**
-**Objetivo**: Deploy a AWS + features production-ready
+### **WEEK 5: Production Deployment**
+**Goal**: Deploy to production (EC2) + production-ready features
 
-#### Día 21-23: AWS Infrastructure
-33. **ECR setup** - Container registry + build pipeline
-34. **ECS Fargate** - Task definitions + service creation
-35. **ALB + DNS** - Load balancer + custom domain + SSL
-36. **RDS migration** - PostgreSQL gestionado + data migration
+#### Día 21-23: Infrastructure
+33. **Prepare EC2 host(s)** - Docker, Docker Compose, user data for startup
+34. **ALB / DNS** - Load balancer + custom domain + SSL (optional)
+35. **RDS migration** - PostgreSQL managed or self-hosted + data migration
 
 #### Día 24-25: Production Features
-37. **CI/CD pipeline** - GitHub Actions + automated deployment
+37. **CI/CD pipeline** - GitHub Actions to build images and deploy to EC2 or registry
 38. **Monitoring setup** - CloudWatch + dashboards + alerts
 39. **Security hardening** - Secrets Manager + IAM roles + VPC
-40. **Final optimization** - Auto-scaling + cost optimization
+40. **Final optimization** - Auto-scaling & backups
 
 **Entregables Semana 5**:
-- ✅ Sistema completo desplegado en AWS
-- ✅ CI/CD automatizado funcionando
-- ✅ Monitoreo y alertas configuradas
+- ✅ System deployed to production (EC2 or chosen target)
+- ✅ CI/CD automated (optional registry usage)
+- ✅ Monitoring and alerts configured
 - ✅ Demo final y documentación completa
 
 ---
@@ -372,13 +415,13 @@ financial-ai-chatbot/
 │   │   ├── docker/            # configs, healthchecks
 │   │   └── compose/           # archivos compose por entorno
 │   ├── aws/
-│   │   ├── ecs/               # task defs, servicios, ALB
+│   │   ├── deployment/        # scripts/configs para deploy en AWS (EC2, ALB, etc.)
 │   │   ├── rds/               # parámetros/migraciones
 │   │   ├── opensearch/        # si se usa
 │   │   └── terraform/         # IaC (opcional)
 │   └── scripts/
-│       ├── create_ecr.sh
-│       ├── deploy_ecr.sh
+│       ├── deploy.sh          # generic deploy script (EC2 or registry)
+│       ├── build_images.sh
 │       └── migrate_db.py
 │
 ├── migrations/                # alembic o SQL plano
@@ -435,14 +478,7 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
+  # Redis removed: not required by the current deployment. Add redis service here if needed later.
 
   search-service:
     build: ./apps/search-service
@@ -456,15 +492,7 @@ services:
       timeout: 10s
       retries: 3
 
-  llm-service:
-    build: ./apps/llm-service
-    ports: ["8002:8002"]
-    env_file: .env
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-      interval: 15s
-      timeout: 10s
-      retries: 3
+  # llm-service removed for local dev: models are accessed via AWS Bedrock in production.
 
   chat-api:
     build: ./apps/chat-api
@@ -472,7 +500,6 @@ services:
     env_file: .env
     depends_on:
       postgres: {condition: service_healthy}
-      redis: {condition: service_healthy}
       search-service: {condition: service_healthy}
       llm-service: {condition: service_healthy}
     healthcheck:
@@ -509,7 +536,6 @@ LOG_LEVEL=DEBUG
 
 # Database
 DATABASE_URL=postgresql://admin:dev_password@postgres:5432/financial_db
-REDIS_URL=redis://redis:6379/0
 
 # Vector Database
 VECTOR_DB_PROVIDER=pinecone
@@ -528,15 +554,14 @@ OPENAI_API_KEY=your_key_here
 OPENAI_MODEL=gpt-4o
 
 # Document Processing
-S3_BUCKET=anyoneai-datasets
+S3_BUCKET=nasdaq-annual-reports-bucket
 S3_PREFIX=nasdaq_annual_reports/
 CHUNK_SIZE=1000
 CHUNK_OVERLAP=150
 TOP_K=8
 
-# Service URLs (interno)
+# Service URLs (internal)
 SEARCH_SERVICE_URL=http://search-service:8001
-LLM_SERVICE_URL=http://llm-service:8002
 ```
 
 ---
@@ -568,104 +593,11 @@ Usuario → Chat API → Check/Create session → Load context histórico
 
 ---
 
-## MIGRACIÓN A AWS - DEPLOYMENT STRATEGY
+## Production & Deployment Notes
 
-### Phase 1: Infrastructure Setup (Día 21)
-#### 1. Container Registry
-```bash
-# Crear ECR repositories
-aws ecr create-repository --repository-name financial-ai/chat-api
-aws ecr create-repository --repository-name financial-ai/search-service
-aws ecr create-repository --repository-name financial-ai/llm-service
-aws ecr create-repository --repository-name financial-ai/frontend
-```
-
-#### 2. Database Migration
-```bash
-# RDS PostgreSQL
-aws rds create-db-instance \
-    --db-instance-identifier financial-ai-db \
-    --db-instance-class db.t3.micro \
-    --engine postgres \
-    --master-username admin \
-    --allocated-storage 20
-
-# ElastiCache Redis
-aws elasticache create-replication-group \
-    --replication-group-id financial-ai-cache \
-    --description "Financial AI Cache" \
-    --node-type cache.t3.micro
-```
-
-### Phase 2: ECS Deployment (Día 22-23)
-#### 3. ECS Cluster & Services
-```json
-// Task Definition ejemplo - Chat API
-{
-  "family": "financial-ai-chat-api",
-  "networkMode": "awsvpc",
-  "requiresCompatibilities": ["FARGATE"],
-  "cpu": "512",
-  "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::account:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::account:role/ecsTaskRole",
-  "containerDefinitions": [
-    {
-      "name": "chat-api",
-      "image": "account.dkr.ecr.region.amazonaws.com/financial-ai/chat-api:latest",
-      "portMappings": [{"containerPort": 8000}],
-      "environment": [
-        {"name": "APP_ENV", "value": "production"},
-        {"name": "DATABASE_URL", "valueFrom": "arn:aws:secretsmanager:region:account:secret:rds-credentials"},
-        {"name": "SEARCH_SERVICE_URL", "value": "http://search-service.local:8001"}
-      ],
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "/ecs/financial-ai/chat-api",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
-        }
-      }
-    }
-  ]
-}
-```
-
-#### 4. Application Load Balancer
-- Public ALB para Chat API + Frontend
-- Internal ALB para comunicación entre servicios
-- SSL certificate via ACM
-- Health checks configurados
-
-### Phase 3: CI/CD & Monitoring (Día 24-25)
-#### 5. GitHub Actions Pipeline
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy to AWS
-on:
-  push:
-    branches: [main]
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-      - name: Build and push to ECR
-        run: |
-          ./scripts/build_and_push.sh
-      - name: Deploy to ECS
-        run: |
-          aws ecs update-service --cluster financial-ai --service chat-api-service --force-new-deployment
-```
-
-#### 6. Monitoring Stack
-- CloudWatch dashboards para cada servicio
-- Alertas por latencia, error rate, resource usage
-- Distributed tracing con X-Ray (opcional)
+- Production is currently run on an AWS EC2 instance. The simplest production model is to run the same containers there using Docker Compose or a container runtime and keep secrets in AWS Secrets Manager.
+- You can add a CI/CD pipeline (GitHub Actions) later to build images and deploy to the EC2 host. Detailed instructions for ECS/ECR have been removed to keep this guide focused on the current setup.
+- Monitoring should be integrated with CloudWatch or your preferred observability backend.
 
 ---
 
@@ -702,21 +634,19 @@ jobs:
 - **Bedrock/OpenAI API**: $30-80/mes
 - **Total desarrollo**: $30-80/mes
 
-### Producción AWS (Semana 5+)
-- **ECS Fargate (4 servicios)**: $120-200/mes
-- **RDS PostgreSQL t3.micro**: $35/mes
-- **ElastiCache t3.micro**: $20/mes
-- **Application Load Balancer**: $22/mes
-- **ECR + CloudWatch**: $10-15/mes
-- **Pinecone Pro** (si necesario): $70/mes
-- **Total producción**: $277-362/mes
+### Production cost estimates (indicative)
+- **AWS EC2** (small instance running containers): $20-80/month depending on size and uptime
+- **RDS PostgreSQL**: $35/month (example)
+- **Pinecone / Vector DB**: tier-based (variable)
+- **Bedrock / LLM usage**: usage-based and variable
+-- **Total production**: depends on usage (compute + LLM calls + vector DB)
 
 ---
 
 ##  Paso a Paso para Construir
 
 ### Fase A — Fundaciones
-1. **Repo + entorno**: clonar, crear `venv`, instalar requirements, `docker-compose up` básico (postgres/redis/hello-world).  
+1. **Repo + entorno**: clonar, crear `venv`, instalar requirements, `docker-compose up` básico (postgres/hello-world).  
 2. **Esquema DB**: crear tablas base (users/sessions/messages/documents). Migraciones (Alembic).  
 3. **Frontend MVP**: Streamlit con input y panel de respuestas (sin RAG aún).
 
@@ -736,10 +666,10 @@ jobs:
 
 ### Fase D — Calidad y Producción
 14. **Tests**: unit (chunker, ranking), integración (search+llm), e2e (pregunta real).  
-15. **Cache**: Redis para respuestas repetidas (hash de query+filtros).  
+15. **Cache (optional)**: Redis can be added for repeated-response caching (hash of query+filters) if needed.
 16. **Observabilidad**: logs estructurados (JSON), métricas (latencia, tokens, top_k hitrate), tracing (opcional).  
 17. **Seguridad**: auth básica/JWT; CORS; rate limit.  
-18. **Deploy AWS**: ECR → ECS → RDS/Redis/ALB → dominios + SSL.  
+18. **Deploy**: Build images and deploy to the chosen target (EC2, managed container service, or registry-based workflow).  
 19. **SLOs**: p95 < 3s, disponibilidad 99%, coste monitoreado.
 ---
 
@@ -863,20 +793,21 @@ curl -X POST http://localhost:8001/search -H "Content-Type: application/json" -d
 curl -X POST http://localhost:8002/generate -H "Content-Type: application/json" -d '{"prompt":"Hello","model":"claude-3-sonnet"}'
 ```
 
-### Deploy a AWS
+### Deploy to Production (EC2)
 ```bash
-# Build y push todas las imágenes
-./scripts/build_and_push.sh
+# Build images locally and copy/tar them to the EC2 host or push to a container registry.
+# On the EC2 host you can run the containers with docker-compose or docker run.
+# Example (on CI or local):
+./scripts/build_and_push.sh   # optional if using a registry
 
-# Deploy infraestructura
-cd infrastructure/aws/terraform
-terraform apply
+# On EC2 host (example using docker-compose)
+scp docker-compose.yml ec2-user@<EC2-IP>:/home/ec2-user/
+ssh ec2-user@<EC2-IP>
+docker-compose pull || true
+docker-compose up -d --build
 
-# Deploy aplicaciones
-./scripts/deploy_ecs.sh
-
-# Verificar deployment
-aws ecs describe-services --cluster financial-ai --services chat-api-service
+# Verify services on EC2: check container logs and health endpoints
+curl http://<EC2-IP>:8000/health
 ```
 
 ---
@@ -1119,10 +1050,10 @@ CREATE TABLE system_configs (
 - [ ] Documentación completa de APIs
 
 ### Infraestructura
-- [ ] Sistema desplegado en AWS con ECS Fargate
+- [ ] Sistema desplegado en producción (EC2 or managed container service)
 - [ ] CI/CD pipeline automatizado funcionando
-- [ ] Database managed (RDS) + cache (ElastiCache)
-- [ ] Load balancer con SSL configurado
+- [ ] Database managed (RDS) + cache (optional)
+- [ ] Load balancer / routing y SSL configurado (if public)
 - [ ] Monitoreo y alertas básicas configuradas
 - [ ] Secrets management implementado
 
