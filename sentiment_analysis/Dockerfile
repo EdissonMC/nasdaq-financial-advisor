@@ -26,7 +26,7 @@ FROM python:3.10-slim AS builder
 WORKDIR /app
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-# Install compilers and build dependencies ONLY here
+# Instala compiladores y dependencias de build SOLO aquí
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
