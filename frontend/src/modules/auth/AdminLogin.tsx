@@ -14,7 +14,7 @@ const AdminLogin = () => {
             localStorage.setItem('isAdmin', 'true');
             navigate('/admin/dashboard');
         } else {
-            alert('Credenciales incorrectas');
+            alert('Incorrect credentials');
         }
     };
 

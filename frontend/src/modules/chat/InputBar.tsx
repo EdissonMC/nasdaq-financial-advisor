@@ -36,7 +36,7 @@ export function InputBar({ disabled, onSend }: Props) {
         value={text}
         onChange={onChange}
         onKeyDown={onKeyDown}
-        placeholder="Escribe tu pregunta..."
+        placeholder="Type your question..."
         disabled={disabled}
         rows={rows}
         style={{
@@ -62,7 +62,7 @@ export function InputBar({ disabled, onSend }: Props) {
           cursor: 'pointer'
         }}
       >
-        Enviar
+        Send
       </button>
     </div>
   )

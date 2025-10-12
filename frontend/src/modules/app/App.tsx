@@ -64,8 +64,8 @@ export function App() {
       } else {
         const first: Conversation = {
           id: crypto.randomUUID(),
-          title: 'Nueva conversación',
-          messages: [{ id: 'welcome', role: 'assistant', content: 'Hola, ¿en qué empresa NASDAQ te gustaría enfocarte?' }],
+          title: 'New conversation',
+          messages: [{ id: 'welcome', role: 'assistant', content: 'Hello! Which NASDAQ company would you like to focus on?' }],
           createdAt: Date.now(),
           updatedAt: Date.now()
         }
@@ -117,7 +117,7 @@ export function App() {
         } catch (error) {
             console.error("Login failed:", error);
             // Opcional: mostrar un mensaje de error al usuario
-            throw new Error('Credenciales inválidas');
+            throw new Error('Invalid Credentials');
         }
     };
 
@@ -156,8 +156,8 @@ const loadUserConversations = async () => {
   const createConversation = () => {
     const conv: Conversation = {
       id: crypto.randomUUID(),
-      title: 'Nueva conversación',
-      messages: [{ id: crypto.randomUUID(), role: 'assistant', content: 'Nueva sesión lista. Pregúntame sobre una empresa.' }],
+      title: 'New conversation',
+      messages: [{ id: crypto.randomUUID(), role: 'assistant', content: 'New session ready. Ask me about a company.' }],
       createdAt: Date.now(),
       updatedAt: Date.now()
     }
@@ -207,7 +207,7 @@ const loadUserConversations = async () => {
     setLoading(true)
     try {
       const data = await askQuestion(text, cid)
-      console.log('[handleSend] Respuesta del backend : >', data)
+      console.log('[handleSend] Backend Response : >', data)
 
       // const bot: ChatMessage = { 
       //   id: crypto.randomUUID(), 
@@ -219,7 +219,7 @@ const loadUserConversations = async () => {
       const bot: ChatMessage & {metadata?: any} = {
         id: crypto.randomUUID(),
         role,
-        content: data.message?.content ?? 'Sin respuesta disponible.',
+        content: data.message?.content ?? 'No response available.',
         citations: data.citations,
         metadata: {
           request_feedback: data.request_feedback  
@@ -227,12 +227,12 @@ const loadUserConversations = async () => {
       }
       console.log('🤖 Assistant message with metadata:', bot);
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, bot], updatedAt: Date.now() } : c))
-      if (activeConv.title === 'Nueva conversación') {
-        const inferred = text.slice(0, 40).trim() || 'Conversación'
+      if (activeConv.title === 'New conversation') {
+        const inferred = text.slice(0, 40).trim() || 'Conversation'
         renameConversation(cid, inferred)
       }
     } catch {
-      const err: ChatMessage = { id: crypto.randomUUID(), role: 'assistant', content: 'Error al obtener respuesta. Intenta nuevamente.' }
+      const err: ChatMessage = { id: crypto.randomUUID(), role: 'assistant', content: 'Error getting response. Please try again.' }
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, err], updatedAt: Date.now() } : c))
     } finally {
       setLoading(false)
@@ -289,11 +289,11 @@ const loadUserConversations = async () => {
       <div style={{ width: '100%', padding: '12px 24px', borderBottom: '1px solid var(--border)', marginBottom: 12 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 16 }}>
           <div style={{ display: 'grid', gap: 4, justifyItems: 'start' }}>
-            <h1 style={{ margin: 0 }}>Asesor Financiero</h1>
-            <span style={{ color: 'var(--muted)', fontSize: 14 }}>Haz preguntas sobre temas financieros</span>
+            <h1 style={{ margin: 0 }}>Financial Advisor</h1>
+            <span style={{ color: 'var(--muted)', fontSize: 14 }}>Ask questions about financial topics</span>
             {apiConfig.authToken && apiConfig.authToken.includes('mock-token') && (
               <span style={{ fontSize: 12, color: '#0b1020', background: '#facc15', padding: '4px 8px', borderRadius: 6 }}>
-                Aviso: usando token simulado (solo DEMO)
+                Notice: using simulated token (DEMO only)
               </span>
             )}
           </div>
@@ -304,7 +304,7 @@ const loadUserConversations = async () => {
                 onClick={handleLogout}
                 style={{ height: 36, padding: '0 12px', background: '#ff4757', color: '#fff', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontWeight: 500, fontSize: 14 }}
               >
-                Cerrar sesión
+                Logout
               </button>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -312,13 +312,13 @@ const loadUserConversations = async () => {
                   onClick={() => setIsLoginOpen(true)}
                   style={{ height: 36, padding: '0 12px', background: 'var(--accent)', color: '#0b1020', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontWeight: 500, fontSize: 14 }}
                 >
-                  Iniciar sesión
+                  Sign In
                 </button>
                 <button
                   onClick={() => setIsRegisterOpen(true)}
                   style={{ height: 36, padding: '0 12px', background: '#8b5cf6', color: '#0b1020', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontWeight: 500, fontSize: 14 }}
                 >
-                  Registrarse
+                  Sign Up
                 </button>
               </div>
             )}
@@ -357,11 +357,11 @@ const loadUserConversations = async () => {
             padding: 24
           }}>
             <div>
-              <h2 style={{ marginTop: 0 }}>Necesitas iniciar sesión</h2>
-              <p className="muted" style={{ marginBottom: 16 }}>Inicia sesión para comenzar a chatear.</p>
+              <h2 style={{ marginTop: 0 }}>You Need to Sign In</h2>
+              <p className="muted" style={{ marginBottom: 16 }}>Sign In to Start Chatting</p>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                <button onClick={() => setIsLoginOpen(true)} style={{ padding: '10px 16px', background: 'var(--accent)', color: '#0b1020', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontWeight: 500 }}>Iniciar sesión</button>
-                <button onClick={() => setIsConfigOpen(true)} style={{ padding: '10px 16px', background: 'var(--primary)', color: '#0b1020', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontWeight: 500 }}>Configurar API</button>
+                <button onClick={() => setIsLoginOpen(true)} style={{ padding: '10px 16px', background: 'var(--accent)', color: '#0b1020', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontWeight: 500 }}>Sign In</button>
+                <button onClick={() => setIsConfigOpen(true)} style={{ padding: '10px 16px', background: 'var(--primary)', color: '#0b1020', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontWeight: 500 }}>Configure API</button>
               </div>
             </div>
           </div>
@@ -384,7 +384,7 @@ const loadUserConversations = async () => {
 
       <div className="container">
         <footer style={{ marginTop: 8, color: 'var(--muted)', fontSize: 12 }}>
-          <span>Proyecto AnyoneAI - 2025</span>
+          <span> Anyone Project - 2025</span>
         </footer>
       </div>
 

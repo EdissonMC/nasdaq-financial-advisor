@@ -27,7 +27,7 @@ export function Sidebar({ conversations, activeId, onSelect, onCreate, onRename,
       minHeight: 0
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <strong>Historial</strong>
+        <strong>History</strong>
         <div style={{ display: 'flex', gap: 8 }}>
           <button 
             onClick={onCreate} 
@@ -41,12 +41,12 @@ export function Sidebar({ conversations, activeId, onSelect, onCreate, onRename,
               fontWeight: '500'
             }}
           >
-            Nuevo
+            New
           </button>
           {onClose && (
             <button
               onClick={onClose}
-              title="Cerrar"
+              title="Close"
               style={{ padding: '8px 10px', background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer' }}
             >
               ✕
@@ -57,7 +57,7 @@ export function Sidebar({ conversations, activeId, onSelect, onCreate, onRename,
       <div style={{ overflowY: 'auto' }}>
         {conversations.length === 0 && (
           <div style={{ color: 'var(--muted)', fontSize: 13 }}>
-            Sin conversaciones. Crea una nueva para empezar.
+            No conversations yet. Create a new one to start
           </div>
         )}
         {conversations.map(c => (
@@ -85,10 +85,10 @@ export function Sidebar({ conversations, activeId, onSelect, onCreate, onRename,
               </button>
               <button 
                 onClick={() => {
-                  const t = prompt('Nuevo nombre', c.title)
+                  const t = prompt('New Name', c.title)
                   if (t && t.trim()) onRename(c.id, t.trim())
                 }} 
-                title="Renombrar" 
+                title="Rename" 
                 style={{ 
                   padding: '8px 12px', 
                   background: 'var(--primary)', 
@@ -102,8 +102,8 @@ export function Sidebar({ conversations, activeId, onSelect, onCreate, onRename,
                 ✎
               </button>
               <button 
-                onClick={() => { if (confirm('¿Eliminar conversación?')) onDelete(c.id) }} 
-                title="Eliminar" 
+                onClick={() => { if (confirm('Delete conversation?')) onDelete(c.id) }} 
+                title="Delete" 
                 style={{ 
                   padding: '8px 12px', 
                   background: '#ff4757', 
@@ -121,7 +121,7 @@ export function Sidebar({ conversations, activeId, onSelect, onCreate, onRename,
           </div>
         ))}
       </div>
-      <div style={{ fontSize: 12, color: 'var(--muted)' }}>Historial sincronizado</div>
+      <div style={{ fontSize: 12, color: 'var(--muted)' }}>Synced history</div>
     </aside>
   )
 }
