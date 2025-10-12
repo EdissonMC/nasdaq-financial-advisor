@@ -118,24 +118,14 @@ export async function askQuestion(
     })
     clearTimeout(timeoutId)
     if (!res.ok) {
-<<<<<<< HEAD
        console.log('[askQuestion] Invalid response from  ', url)
-=======
-       console.log('[askQuestion] Error response from ', url)
->>>>>>> origin/develop
       const text = await res.text().catch(() => '')
       throw new Error(text || `Error ${res.status}: ${res.statusText}`)
     }
     let responseJson = await res.json()
-<<<<<<< HEAD
-    // LOG para depuración de la respuesta
-    console.log('[askQuestion] Server response:', responseJson)
-    // Adaptar para que siempre tenga 'answer'
-=======
     // LOG for response debugging
     console.log('[askQuestion] Server response:', responseJson)
     // Adapt to always have 'answer'
->>>>>>> origin/develop
     if (!responseJson.answer && responseJson.text) {
       responseJson = { ...responseJson, answer: responseJson.text }
     }
@@ -143,6 +133,7 @@ export async function askQuestion(
   } catch (error) {
     clearTimeout(timeoutId)
     if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('The request took too long. Check the API URL.')
       throw new Error('The request took too long. Check the API URL.')
     }
     throw error
@@ -157,11 +148,7 @@ export async function getHistory(sessionId: string): Promise<{ messages: Array<{
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
   const res = await fetch(url.toString(), { headers })
-<<<<<<< HEAD
   if (!res.ok) throw new Error('Failed to fetch history')
-=======
-  if (!res.ok) throw new Error('Could not retrieve history')
->>>>>>> origin/develop
   return res.json()
 }
 
@@ -173,11 +160,7 @@ export async function deleteHistory(sessionId: string): Promise<{ deleted: numbe
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
   const res = await fetch(url.toString(), { method: 'DELETE', headers })
-<<<<<<< HEAD
   if (!res.ok) throw new Error('Failed to delete history')
-=======
-  if (!res.ok) throw new Error('Could not delete history')
->>>>>>> origin/develop
   return res.json()
 }
 

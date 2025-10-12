@@ -64,15 +64,9 @@ export function App() {
         setActiveId(stored[0].id)
       } else {
         const first: Conversation = {
-<<<<<<< HEAD
-          id: crypto.randomUUID(),
+          id: uuidv4(),
           title: 'New conversation',
           messages: [{ id: 'welcome', role: 'assistant', content: 'Hello! Which NASDAQ company would you like to focus on?' }],
-=======
-          id: uuidv4(),
-          title: 'Nueva conversación',
-          messages: [{ id: 'welcome', role: 'assistant', content: 'Hola, ¿en qué empresa NASDAQ te gustaría enfocarte?' }],
->>>>>>> origin/develop
           createdAt: Date.now(),
           updatedAt: Date.now()
         }
@@ -162,15 +156,9 @@ const loadUserConversations = async () => {
 };
   const createConversation = () => {
     const conv: Conversation = {
-<<<<<<< HEAD
-      id: crypto.randomUUID(),
-      title: 'New conversation',
-      messages: [{ id: crypto.randomUUID(), role: 'assistant', content: 'New session ready. Ask me about a company.' }],
-=======
       id: uuidv4(),
-      title: 'Nueva conversación',
-      messages: [{ id: uuidv4(), role: 'assistant', content: 'Nueva sesión lista. Pregúntame sobre una empresa.' }],
->>>>>>> origin/develop
+      title: 'New conversation',
+      messages: [{ id: uuidv4(), role: 'assistant', content: 'New session ready. Ask me about a company.' }],
       createdAt: Date.now(),
       updatedAt: Date.now()
     }
@@ -240,22 +228,13 @@ const loadUserConversations = async () => {
       }
       console.log('🤖 Assistant message with metadata:', bot);
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, bot], updatedAt: Date.now() } : c))
-<<<<<<< HEAD
-      if (activeConv.title === 'New conversation') {
-        const inferred = text.slice(0, 40).trim() || 'Conversation'
-        renameConversation(cid, inferred)
-      }
-    } catch {
-      const err: ChatMessage = { id: crypto.randomUUID(), role: 'assistant', content: 'Error getting response. Please try again.' }
-=======
       // Auto-rename disabled until backend endpoint is implemented
       // if (activeConv.title === 'Nueva conversación') {
       //   const inferred = text.slice(0, 40).trim() || 'Conversación'
       //   renameConversation(cid, inferred)
       // }
     } catch {
-  const err: ChatMessage = { id: uuidv4(), role: 'assistant', content: 'Error al obtener respuesta. Intenta nuevamente.' }
->>>>>>> origin/develop
+  const err: ChatMessage = { id: uuidv4(), role: 'assistant', content: 'Error getting response. Please try again.' }
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, err], updatedAt: Date.now() } : c))
     } finally {
       setLoading(false)
