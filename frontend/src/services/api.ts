@@ -11,13 +11,13 @@ export type Citation = {
   relevance_score?: number
 }
 
-// Nuevo tipo para message
+// New type for message
 export type Message = {
   role: string
   content: string
 }
 
-// Actualizado para reflejar la respuesta real del backend
+// Updated to reflect the actual backend response
 export type AskResponse = {
   message: Message
   model_id?: string
@@ -47,11 +47,11 @@ export function getApiConfig(): ApiConfig {
   )
 }
 
-// Función auxiliar para limpiar URLs y evitar /generate duplicado
+// Helper function to clean URLs and avoid duplicate /generate
 function getCleanBaseUrl(): string {
   const config = getApiConfig()
-  let baseUrl = config.chatApiUrl.replace(/\/+$/, '') // quita barras al final
-  baseUrl = baseUrl.replace(/\/generate$/, '') // quita /generate si está al final
+  let baseUrl = config.chatApiUrl.replace(/\/+$/, '') // remove trailing slashes
+  baseUrl = baseUrl.replace(/\/generate$/, '') // remove /generate if at the end
   return baseUrl
 }
 
@@ -72,11 +72,11 @@ export async function askQuestion(
   model_id?: string,
   max_tokens?: number,
   temperature?: number
-): Promise<ChatResponse> {
+): Promise<AskResponse> {
 
 
 //   {
-//         "prompt": "tienes historicos sobre el desempeño de la accion de apple?",
+//         "prompt": "do you have historical data about Apple's stock performance?",
 //         //"model_id": "dummy-claude-3-haiku",
 //         "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
 //         "max_tokens": 250,
@@ -118,14 +118,24 @@ export async function askQuestion(
     })
     clearTimeout(timeoutId)
     if (!res.ok) {
+<<<<<<< HEAD
        console.log('[askQuestion] Invalid response from  ', url)
+=======
+       console.log('[askQuestion] Error response from ', url)
+>>>>>>> origin/develop
       const text = await res.text().catch(() => '')
       throw new Error(text || `Error ${res.status}: ${res.statusText}`)
     }
     let responseJson = await res.json()
+<<<<<<< HEAD
     // LOG para depuración de la respuesta
     console.log('[askQuestion] Server response:', responseJson)
     // Adaptar para que siempre tenga 'answer'
+=======
+    // LOG for response debugging
+    console.log('[askQuestion] Server response:', responseJson)
+    // Adapt to always have 'answer'
+>>>>>>> origin/develop
     if (!responseJson.answer && responseJson.text) {
       responseJson = { ...responseJson, answer: responseJson.text }
     }
@@ -147,7 +157,11 @@ export async function getHistory(sessionId: string): Promise<{ messages: Array<{
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
   const res = await fetch(url.toString(), { headers })
+<<<<<<< HEAD
   if (!res.ok) throw new Error('Failed to fetch history')
+=======
+  if (!res.ok) throw new Error('Could not retrieve history')
+>>>>>>> origin/develop
   return res.json()
 }
 
@@ -159,7 +173,11 @@ export async function deleteHistory(sessionId: string): Promise<{ deleted: numbe
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
   const res = await fetch(url.toString(), { method: 'DELETE', headers })
+<<<<<<< HEAD
   if (!res.ok) throw new Error('Failed to delete history')
+=======
+  if (!res.ok) throw new Error('Could not delete history')
+>>>>>>> origin/develop
   return res.json()
 }
 
@@ -216,7 +234,7 @@ export async function login(email: string, password: string): Promise<{ access_t
   return res.json()
 }
 
-export async function register(name: string,email: string, password: string): Promise<{ message: string }> {
+export async function register(name: string, email: string, password: string): Promise<{ message: string }> {
   const cfg = getApiConfig()
   const baseUrl = getCleanBaseUrl()
   const payload = { name, email, password };

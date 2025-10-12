@@ -35,5 +35,14 @@ except Exception as e:
 "
 
 # Iniciar la aplicacion
-echo "Iniciando la aplicacion en puerto 8000... (hot reload)"
-exec uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+# echo "Iniciando la aplicacion en puerto 8000... (hot reload)"
+# exec uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Iniciar la aplicacion según el entorno
+if [ "$ENVIRONMENT" = "development" ] || [ "$ENVIRONMENT" = "docker" ]; then
+    echo "Iniciando la aplicacion en modo desarrollo (hot reload)"
+    exec uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+else
+    echo "Iniciando la aplicacion en modo producción"
+    exec uvicorn src.main:app --host 0.0.0.0 --port 8000
+fi

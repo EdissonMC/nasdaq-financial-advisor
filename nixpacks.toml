@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["python39", "nodejs-18_x"]
+
+[phases.build]
+cmds = [
+  "cd apps/chat-api && pip install -r requirements.txt",
+  "cd frontend && npm install && npm run build"
+]
+
+[start]
+cmd = "cd apps/chat-api && ./docker-entrypoint.sh"

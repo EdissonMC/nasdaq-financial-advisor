@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     
     # Modo de operación (dummy o bedrock)
     llm_mode: str = "bedrock"  # dummy | bedrock
+    
+    
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra='ignore')
+
     llm_provider: str = "bedrock"
     
     # Configuración de autenticación
@@ -86,3 +90,11 @@ class Settings(BaseSettings):
 
 # Global configuration instance
 settings = Settings()
+
+
+
+
+if __name__ == "__main__":
+    from pprint import pprint
+
+    pprint(settings.model_dump())

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { v4 as uuidv4 } from 'uuid';
 import { ChatWindow, type ChatMessage } from '../chat/ChatWindow'
 import { Sidebar } from '../conversations/Sidebar'
 import { ConfigModal } from '../config/ConfigModal'
@@ -63,9 +64,15 @@ export function App() {
         setActiveId(stored[0].id)
       } else {
         const first: Conversation = {
+<<<<<<< HEAD
           id: crypto.randomUUID(),
           title: 'New conversation',
           messages: [{ id: 'welcome', role: 'assistant', content: 'Hello! Which NASDAQ company would you like to focus on?' }],
+=======
+          id: uuidv4(),
+          title: 'Nueva conversación',
+          messages: [{ id: 'welcome', role: 'assistant', content: 'Hola, ¿en qué empresa NASDAQ te gustaría enfocarte?' }],
+>>>>>>> origin/develop
           createdAt: Date.now(),
           updatedAt: Date.now()
         }
@@ -155,9 +162,15 @@ const loadUserConversations = async () => {
 };
   const createConversation = () => {
     const conv: Conversation = {
+<<<<<<< HEAD
       id: crypto.randomUUID(),
       title: 'New conversation',
       messages: [{ id: crypto.randomUUID(), role: 'assistant', content: 'New session ready. Ask me about a company.' }],
+=======
+      id: uuidv4(),
+      title: 'Nueva conversación',
+      messages: [{ id: uuidv4(), role: 'assistant', content: 'Nueva sesión lista. Pregúntame sobre una empresa.' }],
+>>>>>>> origin/develop
       createdAt: Date.now(),
       updatedAt: Date.now()
     }
@@ -201,7 +214,7 @@ const loadUserConversations = async () => {
 
   const handleSend = async (text: string) => {
     if (!activeConv) return
-    const newUser: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: text }
+  const newUser: ChatMessage = { id: uuidv4(), role: 'user', content: text }
     const cid = activeConv.id
     setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, newUser], updatedAt: Date.now() } : c))
     setLoading(true)
@@ -209,15 +222,15 @@ const loadUserConversations = async () => {
       const data = await askQuestion(text, cid)
       console.log('[handleSend] Backend Response : >', data)
 
-      // const bot: ChatMessage = { 
-      //   id: crypto.randomUUID(), 
-      //   role: 'assistant', 
-      //   content: data.answer ?? 'Sin respuesta disponible.', citations: data.citations }
+  // const bot: ChatMessage = { 
+  //   id: uuidv4(), 
+  //   role: 'assistant', 
+  //   content: data.answer ?? 'Sin respuesta disponible.', citations: data.citations }
       const allowedRoles = ['assistant', 'user', 'system'] as const;
     const role = allowedRoles.includes(data.message?.role as any) ? data.message?.role as 'assistant' | 'user' | 'system' : 'assistant';
 
       const bot: ChatMessage & {metadata?: any} = {
-        id: crypto.randomUUID(),
+  id: uuidv4(),
         role,
         content: data.message?.content ?? 'No response available.',
         citations: data.citations,
@@ -227,12 +240,22 @@ const loadUserConversations = async () => {
       }
       console.log('🤖 Assistant message with metadata:', bot);
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, bot], updatedAt: Date.now() } : c))
+<<<<<<< HEAD
       if (activeConv.title === 'New conversation') {
         const inferred = text.slice(0, 40).trim() || 'Conversation'
         renameConversation(cid, inferred)
       }
     } catch {
       const err: ChatMessage = { id: crypto.randomUUID(), role: 'assistant', content: 'Error getting response. Please try again.' }
+=======
+      // Auto-rename disabled until backend endpoint is implemented
+      // if (activeConv.title === 'Nueva conversación') {
+      //   const inferred = text.slice(0, 40).trim() || 'Conversación'
+      //   renameConversation(cid, inferred)
+      // }
+    } catch {
+  const err: ChatMessage = { id: uuidv4(), role: 'assistant', content: 'Error al obtener respuesta. Intenta nuevamente.' }
+>>>>>>> origin/develop
       setConversations(prev => prev.map(c => c.id === cid ? { ...c, messages: [...c.messages, err], updatedAt: Date.now() } : c))
     } finally {
       setLoading(false)
@@ -405,11 +428,8 @@ const loadUserConversations = async () => {
         onSubmit={async (name, email, password) => {
           const { register } = await import('../../services/api')
           await register(name, email, password)
-          // Después de registrarse, opcionalmente iniciar sesión automáticamente
-          const { login } = await import('../../services/api')
-          const res = await login(email, password)
-          const token = `${res.token_type ?? 'Bearer'} ${res.access_token}`.trim()
-          handleConfigSave({ ...apiConfig, authToken: token })
+          // Después de registrarse, iniciar sesión automáticamente
+          await handleLogin(email, password)
         }}
       />
     </div>
