@@ -111,7 +111,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           
           <div style={{ paddingRight: '40px' }}>
             <div style={{ fontSize: '20px', marginBottom: '8px' }}>
-              😔 Help us improve
+              Help us improve
             </div>
             <div style={{ 
               color: 'var(--muted)', 

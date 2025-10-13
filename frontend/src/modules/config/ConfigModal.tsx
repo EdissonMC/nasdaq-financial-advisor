@@ -67,12 +67,12 @@ export function ConfigModal({ isOpen, onClose, onSave, currentConfig }: Props) {
         overflow: 'auto'
       }}>
         <h2 style={{ margin: '0 0 16px 0', color: 'var(--text)' }}>
-          Configuración del API
+          API Configuration
         </h2>
         
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: 'block', marginBottom: 8, color: 'var(--text)', fontWeight: '500' }}>
-            URL del Chat API
+            Chat API URL
           </label>
           <input
             type="url"
@@ -91,7 +91,7 @@ export function ConfigModal({ isOpen, onClose, onSave, currentConfig }: Props) {
           />
           {!isValid && (
             <div style={{ color: '#ff4757', fontSize: 12, marginTop: 4 }}>
-              URL no válida. Debe incluir http:// o https://
+              Invalid URL. It must include http:// or https://
             </div>
           )}
         </div>
@@ -120,7 +120,7 @@ export function ConfigModal({ isOpen, onClose, onSave, currentConfig }: Props) {
 
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: 'block', marginBottom: 8, color: 'var(--text)', fontWeight: '500' }}>
-            Top K (resultados)
+            Top K (results)
           </label>
           <input
             type="number"
@@ -148,13 +148,13 @@ export function ConfigModal({ isOpen, onClose, onSave, currentConfig }: Props) {
             onChange={(e) => setConfig(prev => ({ ...prev, simulateIfOffline: e.target.checked }))}
           />
           <label htmlFor="simulate" style={{ color: 'var(--text)' }}>
-            Usar simulación local si no hay conexión
+            Use local simulation if no connection
           </label>
         </div>
 
         <div style={{ marginBottom: 8 }}>
           <label style={{ display: 'block', marginBottom: 8, color: 'var(--text)', fontWeight: '500' }}>
-            Auth Token (opcional)
+            Auth Token (optional)
           </label>
           <input
             type="text"
@@ -200,7 +200,7 @@ export function ConfigModal({ isOpen, onClose, onSave, currentConfig }: Props) {
               fontWeight: '500'
             }}
           >
-            Guardar
+            Save
           </button>
         </div>
       </div>

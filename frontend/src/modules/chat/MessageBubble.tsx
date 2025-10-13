@@ -39,11 +39,11 @@ export function MessageBubble({ role, text, citations }: Props) {
           <>{text}</>
         )}
         {!isUser && (
-          <button onClick={copy} title="Copiar" style={{ position: 'absolute', top: 8, right: 8, background: 'var(--panel)', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', padding: '4px 8px', fontSize: 12, boxShadow: 'var(--shadow-sm)' }}>Copiar</button>
+          <button onClick={copy} title="Copiar" style={{ position: 'absolute', top: 8, right: 8, background: 'var(--panel)', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', padding: '4px 8px', fontSize: 12, boxShadow: 'var(--shadow-sm)' }}>Copy</button>
         )}
         {!isUser && citations && citations.length > 0 && (
           <div style={{ marginTop: 8, borderTop: '1px dashed var(--border)', paddingTop: 6, fontSize: 12 }}>
-            <div style={{ color: 'var(--muted)', marginBottom: 4 }}>Fuentes:</div>
+            <div style={{ color: 'var(--muted)', marginBottom: 4 }}>Sources:</div>
             <ul style={{ margin: 0, paddingLeft: 16 }}>
               {citations.slice(0, 3).map((c, idx) => (
                 <li key={idx}>

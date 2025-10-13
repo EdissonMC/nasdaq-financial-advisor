@@ -118,7 +118,7 @@ export async function askQuestion(
     })
     clearTimeout(timeoutId)
     if (!res.ok) {
-       console.log('[askQuestion] Error response from ', url)
+       console.log('[askQuestion] Invalid response from  ', url)
       const text = await res.text().catch(() => '')
       throw new Error(text || `Error ${res.status}: ${res.statusText}`)
     }
@@ -134,6 +134,7 @@ export async function askQuestion(
     clearTimeout(timeoutId)
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error('The request took too long. Check the API URL.')
+      throw new Error('The request took too long. Check the API URL.')
     }
     throw error
   }
@@ -147,7 +148,7 @@ export async function getHistory(sessionId: string): Promise<{ messages: Array<{
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
   const res = await fetch(url.toString(), { headers })
-  if (!res.ok) throw new Error('Could not retrieve history')
+  if (!res.ok) throw new Error('Failed to fetch history')
   return res.json()
 }
 
@@ -159,7 +160,7 @@ export async function deleteHistory(sessionId: string): Promise<{ deleted: numbe
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
   const res = await fetch(url.toString(), { method: 'DELETE', headers })
-  if (!res.ok) throw new Error('Could not delete history')
+  if (!res.ok) throw new Error('Failed to delete history')
   return res.json()
 }
 
@@ -170,7 +171,7 @@ export async function listConversations(): Promise<{ conversations: Array<{ sess
   const headers: Record<string, string> = {}
   if (cfg.authToken) headers['Authorization'] = cfg.authToken
   const res = await fetch(`${baseUrl}/conversations`, { headers })
-  if (!res.ok) throw new Error('No se pudo listar conversaciones')
+  if (!res.ok) throw new Error('Failed to list conversations')
   return res.json()
 }
 
@@ -182,7 +183,7 @@ export async function createConversation(sessionId: string, title?: string): Pro
   const res = await fetch(`${baseUrl}/conversations`, {
     method: 'POST', headers, body: JSON.stringify({ session_id: sessionId, title })
   })
-  if (!res.ok) throw new Error('No se pudo crear la conversación')
+  if (!res.ok) throw new Error('Failed to create conversation')
   return res.json()
 }
 
@@ -194,7 +195,7 @@ export async function renameConversationApi(sessionId: string, newTitle: string)
   const res = await fetch(`${baseUrl}/conversations/${sessionId}/rename`, {
     method: 'PUT', headers, body: JSON.stringify({ title: newTitle })
   })
-  if (!res.ok) throw new Error('No se pudo renombrar la conversación')
+  if (!res.ok) throw new Error('Failed to rename conversation')
 }
 
 export async function login(email: string, password: string): Promise<{ access_token: string; token_type: string }> {
@@ -220,32 +221,32 @@ export async function register(name: string, email: string, password: string): P
   const cfg = getApiConfig()
   const baseUrl = getCleanBaseUrl()
   const payload = { name, email, password };
-  console.log('🔵 REQUEST:', payload);
+  console.log('REQUEST:', payload);
   try {
     const res = await fetch(`${baseUrl}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    console.log('🔵 RESPONSE STATUS:', res.status);
-    console.log('🔵 RESPONSE HEADERS:', [...res.headers.entries()]);
-    console.log('🔵 CONTENT-LENGTH:', res.headers.get('content-length'));
-    console.log('🔵 CONTENT-TYPE:', res.headers.get('content-type'));
+    console.log('RESPONSE STATUS:', res.status);
+    console.log('RESPONSE HEADERS:', [...res.headers.entries()]);
+    console.log('CONTENT-LENGTH:', res.headers.get('content-length'));
+    console.log('CONTENT-TYPE:', res.headers.get('content-type'));
     // Intentar leer el body de diferentes maneras
     const responseText = await res.text();
-    console.log('🔵 RESPONSE TEXT LENGTH:', responseText.length);
-    console.log('🔵 RESPONSE TEXT:', responseText);
+    console.log('RESPONSE TEXT LENGTH:', responseText.length);
+    console.log('RESPONSE TEXT:', responseText);
     
     if (!responseText) {
       throw new Error('Empty response body');
     }
     
     const jsonData = JSON.parse(responseText);
-    console.log('🟢 PARSED JSON:', jsonData);
+    console.log('PARSED JSON:', jsonData);
     
     return jsonData;
   } catch (error) {
-    console.error('🔴 FETCH ERROR:', error);
+    console.error('FETCH ERROR:', error);
     throw error;
   }
 }

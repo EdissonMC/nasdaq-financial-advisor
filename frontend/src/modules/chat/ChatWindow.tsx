@@ -52,7 +52,7 @@ export function ChatWindow({ messages, loading, onSend }: Props) {
     try {
       const response = await submitFeedback(feedbackData);
       console.log('✅ Feedback sent successfully:', response);
-      alert('¡Gracias por tu feedback! 🙏 Trabajaremos para mejorar tu experiencia.');
+      alert('¡Thank you for your feedback! 🙏 We will work to improve your experience.');
     } catch (error) {
       console.error('❌ Error sending feedback:', error);
       throw error;
@@ -165,7 +165,7 @@ export function ChatWindow({ messages, loading, onSend }: Props) {
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite'
               }}></div>
-              Wally está pensando...
+              Wally is thinking...
             </div>
           )}
         </div>

@@ -40,7 +40,7 @@ export function AdminDashboard() {
           records: [
             {
               id: 1,
-              text: "El mercado está muy volátil hoy",
+              text: "The market is very volatile today",
               sentiment_pos: 0.2,
               sentiment_neg: 0.6,
               sentiment_neu: 0.2,
@@ -51,7 +51,7 @@ export function AdminDashboard() {
             },
             {
               id: 2,
-              text: "Las acciones de Apple suben fuertemente",
+              text: "Apple shares rise sharply",
               sentiment_pos: 0.7,
               sentiment_neg: 0.1,
               sentiment_neu: 0.2,
@@ -86,14 +86,13 @@ export function AdminDashboard() {
 
   if (loading) return (
     <div style={{ padding: 40, textAlign: 'center', color: 'var(--text)' }}>
-      <h2>🔄 Cargando métricas de sentiment...</h2>
+      <h2>🔄 Loading Dashboard...</h2>
     </div>
   )
   
   if (error) return (
     <div style={{ padding: 40, textAlign: 'center', color: '#ff4757' }}>
       <h2>❌ Error: {error}</h2>
-      <p>Verifica que el sentiment-api esté ejecutándose en puerto 8001</p>
     </div>
   )
   
@@ -109,22 +108,22 @@ export function AdminDashboard() {
       backgroundColor: 'var(--bg)'
     }}>
       <h1 style={{ margin: '0 0 32px 0', color: 'var(--text)', fontSize: 32 }}>
-        📊 Panel de Análisis de Sentimientos
+        📊 Sentiment Analysis Panel
       </h1>
 
       {/* Métricas promedio */}
       <div style={{ marginBottom: 32 }}>
-        <h2 style={{ color: 'var(--text)', marginBottom: 16 }}>🎭 Promedios de Sentimiento</h2>
+        <h2 style={{ color: 'var(--text)', marginBottom: 16 }}>Sentiment Averages</h2>
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
           gap: 16 
         }}>
           {[
-            { label: '😊 Promedio Positivo', value: data.metrics.avg_positive, color: '#22c55e' },
-            { label: '😐 Promedio Neutral', value: data.metrics.avg_neutral, color: '#64748b' },
-            { label: '😔 Promedio Negativo', value: data.metrics.avg_negative, color: '#ef4444' },
-            { label: '🎯 Compound Score', value: data.metrics.avg_compound, color: '#8b5cf6' },
+            { label: 'Positive Average', value: data.metrics.avg_positive, color: '#22c55e' },
+            { label: 'Neutral Average', value: data.metrics.avg_neutral, color: '#64748b' },
+            { label: 'Negative Average', value: data.metrics.avg_negative, color: '#ef4444' },
+            { label: 'Compound Score', value: data.metrics.avg_compound, color: '#8b5cf6' },
           ].map((metric) => (
             <div key={metric.label} style={{ 
               background: 'var(--panel)', 
@@ -156,14 +155,14 @@ export function AdminDashboard() {
           textAlign: 'center'
         }}>
           <div style={{ color: 'var(--text)', fontSize: 16, fontWeight: 600 }}>
-            📊 Total de Análisis: {data.records.length.toLocaleString()}
+            Total Analysis: {data.records.length.toLocaleString()}
           </div>
         </div>
       </div>
 
       {/* Gráficos simples con barras CSS */}
       <div style={{ marginBottom: 32 }}>
-        <h2 style={{ color: 'var(--text)', marginBottom: 16 }}>📈 Distribución de Datos</h2>
+        <h2 style={{ color: 'var(--text)', marginBottom: 16 }}>Data Distribution</h2>
         
         {/* Compound Scores */}
         <div style={{ 
@@ -187,6 +186,21 @@ export function AdminDashboard() {
               }} />
             ))}
           </div>
+          {/* Chart Labels */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            marginTop: 12,
+            paddingTop: 12,
+            borderTop: '1px solid var(--border)',
+            fontSize: 12,
+            color: 'var(--muted)'
+          }}>
+            <span>← Most Recent</span>
+            <span style={{ color: '#22c55e' }}>■ Positive</span>
+            <span style={{ color: '#ef4444' }}>■ Negative</span>
+            <span>Oldest →</span>
+          </div>
         </div>
 
         {/* Polarity vs Subjectivity */}
@@ -205,6 +219,25 @@ export function AdminDashboard() {
             borderRadius: 8,
             border: '1px solid var(--border)'
           }}>
+            {/* Axis Lines */}
+            <div style={{
+              position: 'absolute',
+              left: '50%',
+              top: 0,
+              bottom: 0,
+              width: '1px',
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              transform: 'translateX(-50%)'
+            }} />
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: '50%',
+              height: '1px',
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              transform: 'translateY(-50%)'
+            }} />
             {data.charts.polarity.slice(0, 50).map((polarityVal, idx) => {
               const subjectivityVal = data.charts.subjectivity[idx] || 0
               const x = ((polarityVal + 1) / 2) * 100  // Normalize -1,1 to 0,100
@@ -224,13 +257,61 @@ export function AdminDashboard() {
                 }} />
               )
             })}
+            {/* Axis Labels */}
+            <div style={{ 
+              position: 'absolute', 
+              left: 4, 
+              top: 4, 
+              fontSize: 11, 
+              color: 'var(--muted)',
+              fontWeight: 600
+            }}>
+              1.0 (Subjective)
+            </div>
+            <div style={{ 
+              position: 'absolute', 
+              left: 4, 
+              bottom: 4, 
+              fontSize: 11, 
+              color: 'var(--muted)',
+              fontWeight: 600,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2
+            }}>
+              <span>0.0 (Objective)</span>
+              <span>-1.0 (Negative)</span>
+            </div>
+            <div style={{ 
+              position: 'absolute', 
+              right: 4, 
+              bottom: 4, 
+              fontSize: 11, 
+              color: 'var(--muted)',
+              fontWeight: 600
+            }}>
+              +1.0 (Positive)
+            </div>
+          </div>
+          {/* Legend */}
+          <div style={{
+            marginTop: 12,
+            paddingTop: 12,
+            borderTop: '1px solid var(--border)',
+            fontSize: 12,
+            color: 'var(--muted)',
+            textAlign: 'center'
+          }}>
+            <span style={{ marginRight: 16 }}>X-axis: Polarity (-1 = Negative, +1 = Positive)</span>
+            <span>Y-axis: Subjectivity (0 = Objective, 1 = Subjective)</span>
           </div>
         </div>
+
       </div>
 
       {/* Tabla de registros */}
       <div style={{ marginBottom: 32 }}>
-        <h2 style={{ color: 'var(--text)', marginBottom: 16 }}>📋 Registros Recientes</h2>
+        <h2 style={{ color: 'var(--text)', marginBottom: 16 }}> Recent Records</h2>
         <div style={{ 
           background: 'var(--panel)', 
           border: '2px solid var(--border)', 
@@ -243,7 +324,7 @@ export function AdminDashboard() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                  {['ID', 'Texto', 'Positivo', 'Negativo', 'Neutral', 'Compound', 'Polarity', 'Fecha'].map((header) => (
+                  {['ID', 'Text', 'Positive', 'Negative', 'Neutral', 'Compound', 'Polarity', 'Date'].map((header) => (
                     <th key={header} style={{ 
                       textAlign: 'left', 
                       padding: 12, 
@@ -291,7 +372,7 @@ export function AdminDashboard() {
             </table>
           ) : (
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted)' }}>
-              📝 No hay registros de análisis disponibles
+              No analysis records available
             </div>
           )}
         </div>
@@ -304,7 +385,7 @@ export function AdminDashboard() {
         color: 'var(--muted)', 
         fontSize: 14 
       }}>
-        💡 Dashboard 
+        Dashboard 
       </div>
     </div>
   )
